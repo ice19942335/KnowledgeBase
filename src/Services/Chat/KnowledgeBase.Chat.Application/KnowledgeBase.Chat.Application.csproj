@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.9" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\KnowledgeBase.Chat.Domain\KnowledgeBase.Chat.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\KnowledgeBase.Ai\KnowledgeBase.Ai.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\KnowledgeBase.SharedKernel\KnowledgeBase.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\KnowledgeBase.Tenancy\KnowledgeBase.Tenancy.csproj" />
+  </ItemGroup>
+
+</Project>

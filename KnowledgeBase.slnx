@@ -1,0 +1,62 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/KnowledgeBase.Api/KnowledgeBase.Api.csproj" />
+    <Project Path="src/KnowledgeBase.Application/KnowledgeBase.Application.csproj" />
+    <Project Path="src/KnowledgeBase.Domain/KnowledgeBase.Domain.csproj" />
+    <Project Path="src/KnowledgeBase.Infrastructure/KnowledgeBase.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/AppHost/">
+    <Project Path="src/AppHost/KnowledgeBase.AppHost.csproj" />
+  </Folder>
+  <Folder Name="/src/BuildingBlocks/">
+    <Project Path="src/BuildingBlocks/KnowledgeBase.Ai/KnowledgeBase.Ai.csproj" />
+    <Project Path="src/BuildingBlocks/KnowledgeBase.Auth/KnowledgeBase.Auth.csproj" />
+    <Project Path="src/BuildingBlocks/KnowledgeBase.Contracts/KnowledgeBase.Contracts.csproj" />
+    <Project Path="src/BuildingBlocks/KnowledgeBase.Messaging/KnowledgeBase.Messaging.csproj" />
+    <Project Path="src/BuildingBlocks/KnowledgeBase.SharedKernel/KnowledgeBase.SharedKernel.csproj" />
+    <Project Path="src/BuildingBlocks/KnowledgeBase.Tenancy/KnowledgeBase.Tenancy.csproj" />
+    <Project Path="src/BuildingBlocks/KnowledgeBase.Web/KnowledgeBase.Web.csproj" />
+  </Folder>
+  <Folder Name="/src/Gateway/">
+    <Project Path="src/Gateway/KnowledgeBase.Gateway/KnowledgeBase.Gateway.csproj" />
+  </Folder>
+  <Folder Name="/src/ServiceDefaults/">
+    <Project Path="src/ServiceDefaults/KnowledgeBase.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/" />
+  <Folder Name="/src/Services/Chat/">
+    <Project Path="src/Services/Chat/KnowledgeBase.Chat.Api/KnowledgeBase.Chat.Api.csproj" />
+    <Project Path="src/Services/Chat/KnowledgeBase.Chat.Application/KnowledgeBase.Chat.Application.csproj" />
+    <Project Path="src/Services/Chat/KnowledgeBase.Chat.Domain/KnowledgeBase.Chat.Domain.csproj" />
+    <Project Path="src/Services/Chat/KnowledgeBase.Chat.Infrastructure/KnowledgeBase.Chat.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Document/">
+    <Project Path="src/Services/Document/KnowledgeBase.Document.Api/KnowledgeBase.Document.Api.csproj" />
+    <Project Path="src/Services/Document/KnowledgeBase.Document.Application/KnowledgeBase.Document.Application.csproj" />
+    <Project Path="src/Services/Document/KnowledgeBase.Document.Domain/KnowledgeBase.Document.Domain.csproj" />
+    <Project Path="src/Services/Document/KnowledgeBase.Document.Infrastructure/KnowledgeBase.Document.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Identity/">
+    <Project Path="src/Services/Identity/KnowledgeBase.Identity.Api/KnowledgeBase.Identity.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Ingestion/">
+    <Project Path="src/Services/Ingestion/KnowledgeBase.Ingestion.Application/KnowledgeBase.Ingestion.Application.csproj" />
+    <Project Path="src/Services/Ingestion/KnowledgeBase.Ingestion.Infrastructure/KnowledgeBase.Ingestion.Infrastructure.csproj" />
+    <Project Path="src/Services/Ingestion/KnowledgeBase.Ingestion.Worker/KnowledgeBase.Ingestion.Worker.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Search/">
+    <Project Path="src/Services/Search/KnowledgeBase.Search.Api/KnowledgeBase.Search.Api.csproj" />
+    <Project Path="src/Services/Search/KnowledgeBase.Search.Application/KnowledgeBase.Search.Application.csproj" />
+    <Project Path="src/Services/Search/KnowledgeBase.Search.Domain/KnowledgeBase.Search.Domain.csproj" />
+    <Project Path="src/Services/Search/KnowledgeBase.Search.Infrastructure/KnowledgeBase.Search.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Tenant/">
+    <Project Path="src/Services/Tenant/KnowledgeBase.Tenant.Api/KnowledgeBase.Tenant.Api.csproj" />
+    <Project Path="src/Services/Tenant/KnowledgeBase.Tenant.Application/KnowledgeBase.Tenant.Application.csproj" />
+    <Project Path="src/Services/Tenant/KnowledgeBase.Tenant.Domain/KnowledgeBase.Tenant.Domain.csproj" />
+    <Project Path="src/Services/Tenant/KnowledgeBase.Tenant.Infrastructure/KnowledgeBase.Tenant.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/KnowledgeBase.UnitTests/KnowledgeBase.UnitTests.csproj" />
+  </Folder>
+</Solution>

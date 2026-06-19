@@ -1,0 +1,1 @@
+export { DocumentViewRoute } from "./DocumentViewRoute";

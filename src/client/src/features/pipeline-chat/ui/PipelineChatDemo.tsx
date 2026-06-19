@@ -1,0 +1,60 @@
+import { useState, type FormEvent } from "react";
+import { Button, MarkdownContent, PipelineTraceTimeline } from "../../../shared/ui";
+import { DocumentSourceLinks } from "../../../entities/document/ui/DocumentSourceLinks";
+import { usePipelineChat } from "../model/usePipelineChat";
+import styles from "./PipelineChatDemo.module.css";
+
+export function PipelineChatDemo() {
+  const [question, setQuestion] = useState("");
+  const { mutate, data, isPending, isError } = usePipelineChat();
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmed = question.trim();
+    if (trimmed) {
+      mutate(trimmed);
+    }
+  };
+
+  return (
+    <section className={styles.section} data-testid="pipeline-chat-demo">
+      <form className={styles.form} onSubmit={handleSubmit}>
+        <input
+          className={styles.input}
+          type="text"
+          placeholder="Ask a question to inspect the RAG pipeline…"
+          aria-label="Pipeline question"
+          data-testid="pipeline-chat-question"
+          value={question}
+          onChange={(event) => setQuestion(event.target.value)}
+        />
+        <Button type="submit" disabled={isPending || !question.trim()}>
+          {isPending ? "Running pipeline…" : "Run with trace"}
+        </Button>
+      </form>
+
+      {isError && (
+        <p className={styles.error} data-testid="pipeline-chat-error">
+          Pipeline request failed. Please try again.
+        </p>
+      )}
+
+      {data && (
+        <div className={styles.result}>
+          <article className={styles.answer} data-testid="pipeline-chat-answer">
+            <h3 className={styles.answerTitle}>Answer</h3>
+            <MarkdownContent content={data.answer} testId="pipeline-chat-answer-markdown" />
+            {data.sources.length > 0 && (
+              <>
+                <h4 className={styles.sourcesTitle}>Sources</h4>
+                <DocumentSourceLinks sources={data.sources} testIdPrefix="pipeline" />
+              </>
+            )}
+          </article>
+
+          <PipelineTraceTimeline steps={data.steps} totalDurationMs={data.totalDurationMs} />
+        </div>
+      )}
+    </section>
+  );
+}

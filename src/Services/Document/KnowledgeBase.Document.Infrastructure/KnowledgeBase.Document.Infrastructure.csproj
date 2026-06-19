@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.4">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\KnowledgeBase.Document.Application\KnowledgeBase.Document.Application.csproj" />
+    <ProjectReference Include="..\KnowledgeBase.Document.Domain\KnowledgeBase.Document.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\KnowledgeBase.Contracts\KnowledgeBase.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\KnowledgeBase.Messaging\KnowledgeBase.Messaging.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\KnowledgeBase.SharedKernel\KnowledgeBase.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\KnowledgeBase.Tenancy\KnowledgeBase.Tenancy.csproj" />
+  </ItemGroup>
+
+</Project>

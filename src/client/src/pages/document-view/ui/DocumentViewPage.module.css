@@ -1,0 +1,49 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #111827;
+}
+
+.meta {
+  margin: 0.35rem 0 0;
+  color: #6b7280;
+}
+
+.state {
+  color: #6b7280;
+}
+
+.textContent {
+  margin: 0;
+  padding: 1.25rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background-color: #ffffff;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.6;
+  color: #111827;
+  overflow-x: auto;
+}
+
+.pdfFrame {
+  width: 100%;
+  min-height: 70vh;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background-color: #ffffff;
+}

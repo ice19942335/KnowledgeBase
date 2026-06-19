@@ -1,0 +1,6 @@
+@KnowledgeBase.Gateway_HostAddress = http://localhost:5055
+
+GET {{KnowledgeBase.Gateway_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

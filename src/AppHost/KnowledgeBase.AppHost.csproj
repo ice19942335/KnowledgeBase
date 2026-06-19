@@ -1,0 +1,28 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.4.4">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UserSecretsId>eb4f7b84-37af-42ad-80cf-bb59e937a4b4</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.JavaScript" Version="13.4.4" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.4.4" />
+    <PackageReference Include="Aspire.Hosting.RabbitMQ" Version="13.4.4" />
+    <PackageReference Include="Aspire.Hosting.Redis" Version="13.4.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Services\Document\KnowledgeBase.Document.Api\KnowledgeBase.Document.Api.csproj" />
+    <ProjectReference Include="..\Services\Ingestion\KnowledgeBase.Ingestion.Worker\KnowledgeBase.Ingestion.Worker.csproj" />
+    <ProjectReference Include="..\Services\Search\KnowledgeBase.Search.Api\KnowledgeBase.Search.Api.csproj" />
+    <ProjectReference Include="..\Services\Chat\KnowledgeBase.Chat.Api\KnowledgeBase.Chat.Api.csproj" />
+    <ProjectReference Include="..\Services\Identity\KnowledgeBase.Identity.Api\KnowledgeBase.Identity.Api.csproj" />
+    <ProjectReference Include="..\Services\Tenant\KnowledgeBase.Tenant.Api\KnowledgeBase.Tenant.Api.csproj" />
+    <ProjectReference Include="..\Gateway\KnowledgeBase.Gateway\KnowledgeBase.Gateway.csproj" />
+  </ItemGroup>
+
+</Project>
