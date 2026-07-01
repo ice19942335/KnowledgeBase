@@ -1,9 +1,10 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { Button } from "../../../shared/ui";
 import { useUploadDocument } from "../model/useUploadDocument";
 import styles from "./UploadDocument.module.css";
 
 export function UploadDocument() {
+  const formRef = useRef<HTMLFormElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState("");
   const { mutate, isPending, isError } = useUploadDocument();
@@ -20,14 +21,14 @@ export function UploadDocument() {
         onSuccess: () => {
           setFile(null);
           setName("");
-          event.currentTarget.reset();
+          formRef.current?.reset();
         },
       },
     );
   };
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit}>
+    <form ref={formRef} className={styles.form} onSubmit={handleSubmit}>
       <input
         className={styles.field}
         type="file"
