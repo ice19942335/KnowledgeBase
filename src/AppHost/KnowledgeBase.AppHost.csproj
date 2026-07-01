@@ -14,6 +14,8 @@
     <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.4.4" />
     <PackageReference Include="Aspire.Hosting.RabbitMQ" Version="13.4.4" />
     <PackageReference Include="Aspire.Hosting.Redis" Version="13.4.4" />
+    <!-- Override transitive 2.5.192 from Aspire.Hosting (GHSA-hv8m-jj95-wg3x et al.) -->
+    <PackageReference Include="MessagePack" Version="2.5.302" />
   </ItemGroup>
 
   <ItemGroup>
