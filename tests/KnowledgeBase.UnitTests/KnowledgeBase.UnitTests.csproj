@@ -26,6 +26,7 @@
     <ProjectReference Include="..\..\src\Services\Ingestion\KnowledgeBase.Ingestion.Infrastructure\KnowledgeBase.Ingestion.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Services\Search\KnowledgeBase.Search.Application\KnowledgeBase.Search.Application.csproj" />
     <ProjectReference Include="..\..\src\BuildingBlocks\KnowledgeBase.Ai\KnowledgeBase.Ai.csproj" />
+    <ProjectReference Include="..\..\src\BuildingBlocks\KnowledgeBase.SharedKernel\KnowledgeBase.SharedKernel.csproj" />
     <ProjectReference Include="..\..\src\BuildingBlocks\KnowledgeBase.Tenancy\KnowledgeBase.Tenancy.csproj" />
   </ItemGroup>
 

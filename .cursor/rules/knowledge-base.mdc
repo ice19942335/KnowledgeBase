@@ -1,0 +1,24 @@
+---
+description: KnowledgeBase project context and coding conventions
+alwaysApply: true
+---
+
+# KnowledgeBase
+
+Read [AGENTS.md](../../AGENTS.md) for full project context (architecture, status, key files).
+
+## Stack
+
+.NET 10 microservices + Aspire + YARP gateway + React/TS/Vite (FSD) + Postgres/pgvector + RabbitMQ/MassTransit + Redis + Gemini AI.
+
+## Non-negotiable conventions
+
+- Microservices in `src/Services/*` with Clean Architecture layers (`Api/Application/Domain/Infrastructure`).
+- HTTP via **Controllers** — no inline lambda endpoint registration.
+- Config via `*Options.cs` + DI binding — no raw `IConfiguration["..."]` in app code.
+- Tenant id from `X-Tenant-Id` header only; gateway verifies membership.
+- EF migrations always with `.Designer.cs`; add indexes for frequently queried columns.
+- C# private fields: camelCase, no underscore prefix. Comments in English only.
+- Frontend: FSD layout, Zustand + TanStack Query, CSS Modules (no inline styles).
+- Active stack is Aspire (`src/AppHost`) — ignore legacy `src/KnowledgeBase.Api` monolith.
+- After feature changes: update README.md, run affected tests, add unit tests (TDD).

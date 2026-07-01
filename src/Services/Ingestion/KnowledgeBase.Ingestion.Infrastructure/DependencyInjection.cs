@@ -16,7 +16,7 @@ public static class DependencyInjection
         services.AddSingleton<ITextExtractor, PdfTextExtractor>();
         services.AddSingleton<ITextExtractor, PlainTextExtractor>();
 
-        services.AddKnowledgeBaseEmbeddings(configuration);
+        services.AddKnowledgeBaseAi(configuration);
         services.AddLocalFileStorage(configuration);
 
         return services;

@@ -11,6 +11,8 @@ public sealed class DocumentService : IDocumentService
     private readonly ITextExtractionService extractionService;
     private readonly ITextChunker chunker;
     private readonly IEmbeddingGenerator embeddingGenerator;
+    private readonly IDocumentSummaryGenerator documentSummaryGenerator;
+    private readonly IContextualEmbeddingFormatter contextualEmbeddingFormatter;
     private readonly ILogger<DocumentService> logger;
 
     public DocumentService(
@@ -18,12 +20,16 @@ public sealed class DocumentService : IDocumentService
         ITextExtractionService extractionService,
         ITextChunker chunker,
         IEmbeddingGenerator embeddingGenerator,
+        IDocumentSummaryGenerator documentSummaryGenerator,
+        IContextualEmbeddingFormatter contextualEmbeddingFormatter,
         ILogger<DocumentService> logger)
     {
         this.repository = repository;
         this.extractionService = extractionService;
         this.chunker = chunker;
         this.embeddingGenerator = embeddingGenerator;
+        this.documentSummaryGenerator = documentSummaryGenerator;
+        this.contextualEmbeddingFormatter = contextualEmbeddingFormatter;
         this.logger = logger;
     }
 
@@ -96,27 +102,39 @@ public sealed class DocumentService : IDocumentService
 
     private async Task BuildChunksAsync(Document document, string text, CancellationToken cancellationToken)
     {
-        var chunkTexts = chunker.Split(text);
+        var chunkParts = chunker.Split(text);
 
-        if (chunkTexts.Count == 0)
+        if (chunkParts.Count == 0)
         {
             logger.LogWarning("Document {DocumentId} produced no chunks; nothing to embed.", document.Id);
             return;
         }
 
-        var embeddings = await embeddingGenerator.GenerateAsync(chunkTexts, cancellationToken);
+        var summary = await documentSummaryGenerator.GenerateAsync(document.Name, text, cancellationToken);
+        var embeddingInputs = chunkParts
+            .Select((chunk, index) => contextualEmbeddingFormatter.Format(new ContextualEmbeddingRequest(
+                document.Name,
+                document.FileName,
+                index,
+                chunkParts.Count,
+                chunk.Content,
+                chunk.SectionTitle,
+                summary)))
+            .ToList();
 
-        if (embeddings.Count != chunkTexts.Count)
+        var embeddings = await embeddingGenerator.GenerateAsync(embeddingInputs, cancellationToken);
+
+        if (embeddings.Count != chunkParts.Count)
         {
             throw new InvalidOperationException(
-                $"Embedding count ({embeddings.Count}) does not match chunk count ({chunkTexts.Count}).");
+                $"Embedding count ({embeddings.Count}) does not match chunk count ({chunkParts.Count}).");
         }
 
-        var chunks = new List<DocumentChunk>(chunkTexts.Count);
+        var chunks = new List<DocumentChunk>(chunkParts.Count);
 
-        for (var index = 0; index < chunkTexts.Count; index++)
+        for (var index = 0; index < chunkParts.Count; index++)
         {
-            var chunk = new DocumentChunk(document.Id, index, chunkTexts[index]);
+            var chunk = new DocumentChunk(document.Id, index, chunkParts[index].Content);
             chunk.SetEmbedding(embeddings[index]);
             chunks.Add(chunk);
         }

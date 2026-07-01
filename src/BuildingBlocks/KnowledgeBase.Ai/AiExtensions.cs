@@ -16,6 +16,8 @@ public static class AiExtensions
         RegisterAiRuntimeOptions(services, configuration);
         RegisterAvailabilityState(services);
 
+        RegisterContextualEmbeddingServices(services, configuration);
+
         services.AddSingleton<IEmbeddingGenerator, GeminiEmbeddingGenerator>();
         services.AddSingleton<IChatCompletionService, GeminiChatCompletionService>();
 
@@ -34,9 +36,26 @@ public static class AiExtensions
         RegisterAiRuntimeOptions(services, configuration);
         RegisterAvailabilityState(services);
 
+        RegisterContextualEmbeddingServices(services, configuration);
+
         services.AddSingleton<IEmbeddingGenerator, GeminiEmbeddingGenerator>();
 
         return services;
+    }
+
+    private static void RegisterContextualEmbeddingServices(
+        IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.AddOptions<ContextualEmbeddingOptions>()
+            .Bind(configuration.GetSection(ContextualEmbeddingOptions.SectionName));
+
+        services.AddOptions<RerankingOptions>()
+            .Bind(configuration.GetSection(RerankingOptions.SectionName));
+
+        services.AddSingleton<IContextualEmbeddingFormatter, ContextualEmbeddingFormatter>();
+        services.AddSingleton<IDocumentSummaryGenerator, DocumentSummaryGenerator>();
+        services.AddSingleton<IChunkReranker, LlmChunkReranker>();
     }
 
     private static void RegisterAvailabilityState(IServiceCollection services)

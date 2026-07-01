@@ -39,7 +39,20 @@ public sealed class TextChunkerTests
         var result = chunker.Split("  hello   world \n test ");
 
         Assert.Single(result);
-        Assert.Equal("hello world test", result[0]);
+        Assert.Equal("hello world test", result[0].Content);
+    }
+
+    [Fact]
+    public void Split_WithMarkdownHeading_AssignsSectionTitle()
+    {
+        var chunker = CreateChunker(200, 10);
+        var text = "## Leave Policy\nEmployees receive twenty eight calendar days per year.";
+
+        var result = chunker.Split(text);
+
+        Assert.Single(result);
+        Assert.Equal("Leave Policy", result[0].SectionTitle);
+        Assert.Contains("twenty eight calendar days", result[0].Content);
     }
 
     [Fact]
@@ -52,7 +65,7 @@ public sealed class TextChunkerTests
         var result = chunker.Split(text);
 
         Assert.True(result.Count > 1);
-        Assert.All(result, chunk => Assert.True(chunk.Length <= maxChunkSize));
+        Assert.All(result, chunk => Assert.True(chunk.Content.Length <= maxChunkSize));
     }
 
     [Fact]
@@ -63,7 +76,7 @@ public sealed class TextChunkerTests
         var text = string.Join(' ', words);
 
         var result = chunker.Split(text);
-        var combined = string.Join(' ', result);
+        var combined = string.Join(' ', result.Select(chunk => chunk.Content));
 
         Assert.All(words, word => Assert.Contains(word, combined));
     }
@@ -77,8 +90,8 @@ public sealed class TextChunkerTests
         var result = chunker.Split(text);
 
         Assert.True(result.Count >= 2);
-        var tailOfFirst = result[0].Split(' ')[^1];
-        Assert.Contains(tailOfFirst, result[1]);
+        var tailOfFirst = result[0].Content.Split(' ')[^1];
+        Assert.Contains(tailOfFirst, result[1].Content);
     }
 
     [Fact]
@@ -91,6 +104,6 @@ public sealed class TextChunkerTests
         var result = chunker.Split(text);
 
         Assert.True(result.Count >= 4);
-        Assert.All(result, chunk => Assert.True(chunk.Length <= maxChunkSize));
+        Assert.All(result, chunk => Assert.True(chunk.Content.Length <= maxChunkSize));
     }
 }

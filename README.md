@@ -1320,11 +1320,19 @@ Mapped against the full roadmap above.
   Document service.
 * **Phase 3 — Text Extraction**: PDF (PdfPig) and plain-text extractors in the
   Ingestion worker.
-* **Phase 4 — Chunking**: word-aware, overlapping chunker with full unit coverage.
-* **Phase 5 — Embeddings**: Gemini embeddings stored in `vector(1536)` columns.
-* **Phase 6 — Semantic Search**: pgvector cosine search with HNSW index via
-  dedicated Search service. Keyword fallback activates when vector matches fall
-  below `Search:MinSimilarityScore`. Without `Gemini:ApiKey`, search returns HTTP 503.
+* **Phase 4 — Chunking**: section-aware, word-overlapping chunker (`HeadingParser` +
+  `TextChunker`) with full unit coverage.
+* **Phase 5 — Embeddings**: contextual embeddings at index time (document summary +
+  section title + metadata wrapped for `RETRIEVAL_DOCUMENT`; raw chunk text stored
+  for RAG). Gemini vectors in `vector(1536)` columns. Re-upload documents after
+  changing `ContextualEmbedding` settings.
+* **Phase 6 — Semantic Search**: hybrid retrieval pipeline — vector + keyword RRF
+  fusion, neighbor chunk expansion (`NeighborExpansionRadius`), LLM reranking
+  (`RerankingEnabled`). Config: `RetrievalTopK`, `FinalTopK`, `HybridSearchEnabled`.
+  Explorer trace shows `search.vector`, `search.keyword`, `search.hybrid_merge`,
+  `search.expand_neighbors`, `search.rerank`.
+* **RAG test document**: `assets/HR_Policy_MeatKombinat_EN.md` with cross-chunk
+  references (XREF-01..06). See `assets/QuestionExamples.md`.
 * **Phase 7 — RAG Chat**: retrieve → prompt → LLM via dedicated Chat service.
 * **Phase 8 — Source References**: answers return distinct source documents.
 * **Phase 9 — Chat History**: `Conversation` / `ChatMessage` entities with full
@@ -1341,7 +1349,7 @@ Mapped against the full roadmap above.
   Explorer shows all indexed document chunks and a pipeline trace for each chat
   request (tenant → conversation → search → prompt → LLM → persist, with nested
   search steps and JSON input/output per step).
-* **Tests**: 38 backend unit tests (chunker, ingestion, search, RAG, prompt,
+* **Tests**: 44 backend unit tests (chunker, contextual embeddings, hybrid search,
   keyword search) and 13 frontend tests (Button, DocumentList, documentPolling,
   PipelineTraceTimeline, DocumentChunksExplorer).
 * **EF migrations** for all 5 databases, each with `.Designer.cs`.

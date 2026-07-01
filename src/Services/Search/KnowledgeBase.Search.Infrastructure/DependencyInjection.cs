@@ -23,7 +23,7 @@ public static class DependencyInjection
 
         services.AddScoped<IChunkRepository, ChunkRepository>();
 
-        services.AddKnowledgeBaseEmbeddings(configuration);
+        services.AddKnowledgeBaseAi(configuration);
 
         services.AddKnowledgeBaseMessaging(configuration, bus =>
         {

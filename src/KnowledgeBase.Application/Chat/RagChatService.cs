@@ -1,6 +1,7 @@
 using KnowledgeBase.Ai;
 using KnowledgeBase.Application.Abstractions;
 using KnowledgeBase.Application.Common.Options;
+using KnowledgeBase.Application.Search;
 using Microsoft.Extensions.Options;
 
 namespace KnowledgeBase.Application.Chat;
@@ -8,18 +9,18 @@ namespace KnowledgeBase.Application.Chat;
 public sealed class RagChatService : IRagChatService
 {
     private readonly IEmbeddingGenerator embeddingGenerator;
-    private readonly IChunkSearchRepository searchRepository;
+    private readonly ChunkRetrievalPipeline retrievalPipeline;
     private readonly IChatCompletionService chatCompletionService;
     private readonly RagOptions options;
 
     public RagChatService(
         IEmbeddingGenerator embeddingGenerator,
-        IChunkSearchRepository searchRepository,
+        ChunkRetrievalPipeline retrievalPipeline,
         IChatCompletionService chatCompletionService,
         IOptions<RagOptions> options)
     {
         this.embeddingGenerator = embeddingGenerator;
-        this.searchRepository = searchRepository;
+        this.retrievalPipeline = retrievalPipeline;
         this.chatCompletionService = chatCompletionService;
         this.options = options.Value;
     }
@@ -32,7 +33,8 @@ public sealed class RagChatService : IRagChatService
         }
 
         var questionEmbedding = await embeddingGenerator.GenerateAsync(question, cancellationToken);
-        var matches = await searchRepository.SearchAsync(
+        var matches = await retrievalPipeline.RetrieveAsync(
+            question,
             questionEmbedding,
             options.ContextChunkCount,
             cancellationToken);

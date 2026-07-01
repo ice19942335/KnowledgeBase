@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\KnowledgeBase.Domain\KnowledgeBase.Domain.csproj" />
     <ProjectReference Include="..\BuildingBlocks\KnowledgeBase.Ai\KnowledgeBase.Ai.csproj" />
+    <ProjectReference Include="..\BuildingBlocks\KnowledgeBase.SharedKernel\KnowledgeBase.SharedKernel.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -13,6 +13,7 @@ public static class DependencyInjection
         services.AddScoped<ITextChunker, TextChunker>();
         services.AddScoped<ITextExtractionService, TextExtractionService>();
         services.AddScoped<IDocumentService, DocumentService>();
+        services.AddScoped<ChunkRetrievalPipeline>();
         services.AddScoped<ISemanticSearchService, SemanticSearchService>();
         services.AddScoped<IRagChatService, RagChatService>();
 

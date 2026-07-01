@@ -1,3 +1,5 @@
+using KnowledgeBase.SharedKernel.TextProcessing;
+
 namespace KnowledgeBase.Application.Abstractions;
 
 /// <summary>
@@ -5,5 +7,5 @@ namespace KnowledgeBase.Application.Abstractions;
 /// </summary>
 public interface ITextChunker
 {
-    IReadOnlyList<string> Split(string text);
+    IReadOnlyList<TextChunk> Split(string text);
 }

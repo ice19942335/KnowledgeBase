@@ -1,5 +1,6 @@
 using KnowledgeBase.Search.Application;
 using KnowledgeBase.Search.Domain;
+using KnowledgeBase.SharedKernel.Retrieval;
 using Microsoft.EntityFrameworkCore;
 using Pgvector;
 using Pgvector.EntityFrameworkCore;
@@ -70,6 +71,37 @@ public sealed class ChunkRepository : IChunkRepository
                 c.Content,
                 1.0 - c.Embedding.CosineDistance(queryEmbedding)))
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<SearchResult>> GetChunksByLocatorsAsync(
+        Guid tenantId,
+        IReadOnlyList<ChunkLocator> locators,
+        CancellationToken cancellationToken)
+    {
+        if (locators.Count == 0)
+        {
+            return Array.Empty<SearchResult>();
+        }
+
+        var documentIds = locators.Select(locator => locator.DocumentId).Distinct().ToList();
+        var locatorSet = locators
+            .Select(locator => (locator.DocumentId, locator.ChunkIndex))
+            .ToHashSet();
+
+        var chunks = await dbContext.Chunks
+            .Where(chunk => chunk.TenantId == tenantId && documentIds.Contains(chunk.DocumentId))
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+
+        return chunks
+            .Where(chunk => locatorSet.Contains((chunk.DocumentId, chunk.ChunkIndex)))
+            .Select(chunk => new SearchResult(
+                chunk.DocumentId,
+                chunk.DocumentName,
+                chunk.ChunkIndex,
+                chunk.Content,
+                0))
+            .ToList();
     }
 
     public async Task<IReadOnlyList<ChunkDetailDto>> ListAsync(

@@ -1,3 +1,5 @@
+using KnowledgeBase.SharedKernel.Retrieval;
+
 namespace KnowledgeBase.Application.Abstractions;
 
 /// <summary>
@@ -5,8 +7,17 @@ namespace KnowledgeBase.Application.Abstractions;
 /// </summary>
 public interface IChunkSearchRepository
 {
-    Task<IReadOnlyList<ChunkMatch>> SearchAsync(
+    Task<IReadOnlyList<ChunkMatch>> SearchVectorAsync(
         float[] queryEmbedding,
         int topK,
+        CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<ChunkMatch>> SearchKeywordAsync(
+        string query,
+        int topK,
+        CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<ChunkMatch>> GetChunksByLocatorsAsync(
+        IReadOnlyList<ChunkLocator> locators,
         CancellationToken cancellationToken);
 }

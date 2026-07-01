@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using KnowledgeBase.Ingestion.Application.Abstractions;
+using KnowledgeBase.SharedKernel.TextProcessing;
 using Microsoft.Extensions.Options;
 
 namespace KnowledgeBase.Ingestion.Application;
@@ -34,13 +35,34 @@ public sealed partial class TextChunker : ITextChunker
         overlapSize = value.OverlapSize;
     }
 
-    public IReadOnlyList<string> Split(string text)
+    public IReadOnlyList<TextChunk> Split(string text)
     {
         if (string.IsNullOrWhiteSpace(text))
         {
-            return Array.Empty<string>();
+            return Array.Empty<TextChunk>();
         }
 
+        var sections = HeadingParser.SplitIntoSections(text);
+        var chunks = new List<TextChunk>();
+
+        foreach (var section in sections)
+        {
+            if (string.IsNullOrWhiteSpace(section.Body))
+            {
+                continue;
+            }
+
+            foreach (var content in SplitSectionBody(section.Body))
+            {
+                chunks.Add(new TextChunk(content, section.Title));
+            }
+        }
+
+        return chunks;
+    }
+
+    private IReadOnlyList<string> SplitSectionBody(string text)
+    {
         var normalized = WhitespaceRegex().Replace(text, " ").Trim();
 
         if (normalized.Length <= maxChunkSize)

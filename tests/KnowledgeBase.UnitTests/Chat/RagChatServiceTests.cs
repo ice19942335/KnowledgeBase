@@ -2,6 +2,7 @@ using KnowledgeBase.Ai;
 using KnowledgeBase.Application.Abstractions;
 using KnowledgeBase.Application.Chat;
 using KnowledgeBase.Application.Common.Options;
+using KnowledgeBase.Application.Search;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using Xunit;
@@ -12,20 +13,38 @@ public sealed class RagChatServiceTests
 {
     private readonly IEmbeddingGenerator embeddingGenerator = Substitute.For<IEmbeddingGenerator>();
     private readonly IChunkSearchRepository searchRepository = Substitute.For<IChunkSearchRepository>();
+    private readonly IChunkReranker chunkReranker = Substitute.For<IChunkReranker>();
     private readonly IChatCompletionService chatCompletionService = Substitute.For<IChatCompletionService>();
 
-    private RagChatService CreateSut(RagOptions? options = null) => new(
-        embeddingGenerator,
-        searchRepository,
-        chatCompletionService,
-        Options.Create(options ?? new RagOptions { ContextChunkCount = 5, NoAnswerResponse = "I don't know." }));
+    private RagChatService CreateSut(RagOptions? options = null)
+    {
+        var retrievalPipeline = new ChunkRetrievalPipeline(
+            searchRepository,
+            chunkReranker,
+            Options.Create(new SearchOptions
+            {
+                RetrievalTopK = 20,
+                FinalTopK = 5,
+                HybridSearchEnabled = false,
+                NeighborExpansionRadius = 0,
+                RerankingEnabled = false
+            }));
+
+        return new RagChatService(
+            embeddingGenerator,
+            retrievalPipeline,
+            chatCompletionService,
+            Options.Create(options ?? new RagOptions { ContextChunkCount = 5, NoAnswerResponse = "I don't know." }));
+    }
 
     [Fact]
     public async Task AskAsync_WhenNoContext_ReturnsNoAnswerAndSkipsLlm()
     {
         embeddingGenerator.GenerateAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(new[] { 0.1f });
-        searchRepository.SearchAsync(Arg.Any<float[]>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+        searchRepository.SearchVectorAsync(Arg.Any<float[]>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<ChunkMatch>());
+        searchRepository.SearchKeywordAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<ChunkMatch>());
 
         var sut = CreateSut();
@@ -46,13 +65,19 @@ public sealed class RagChatServiceTests
 
         embeddingGenerator.GenerateAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(new[] { 0.1f });
-        searchRepository.SearchAsync(Arg.Any<float[]>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+        searchRepository.SearchVectorAsync(Arg.Any<float[]>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(new[]
             {
                 new ChunkMatch(firstDocument, "HR Policy", "hr.pdf", 0, "25 vacation days", 0.95),
                 new ChunkMatch(firstDocument, "HR Policy", "hr.pdf", 1, "annual leave", 0.90),
                 new ChunkMatch(secondDocument, "Handbook", "handbook.pdf", 0, "leave rules", 0.80)
             });
+        chunkReranker.RerankAsync(
+                Arg.Any<string>(),
+                Arg.Any<IReadOnlyList<RankedChunkCandidate>>(),
+                Arg.Any<int>(),
+                Arg.Any<CancellationToken>())
+            .Returns(call => call.Arg<IReadOnlyList<RankedChunkCandidate>>());
         chatCompletionService.CompleteAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns("Employees receive 25 vacation days.");
 

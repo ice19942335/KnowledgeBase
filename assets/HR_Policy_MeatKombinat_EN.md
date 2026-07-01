@@ -82,6 +82,8 @@ The OSH unit (room 115) conducts briefings, production-floor access approvals, a
 
 The veterinary service (room 310) delivers sanitary briefings to all production workers **before their first shift**.
 
+Sanitary re-test scheduling fees are defined in **Section 15.4**.
+
 ---
 
 ## 3. Recruitment and Hiring
@@ -127,6 +129,8 @@ An employee who successfully refers a candidate receives a **one-time bonus of E
 - completes **3 months** of employment;
 - receives no disciplinary sanctions during that period.
 
+Q4 seasonal referral adjustments are listed in **Appendix G** (standard EUR 300 bonus rules above apply outside Q4).
+
 ### 3.5. Grounds for Refusal to Hire
 
 Employment **must be declined** if the candidate:
@@ -160,6 +164,8 @@ Employment **must be declined** if the candidate:
 | Month 3 | Final probation review |
 
 A **mentor** is appointed by department order. Mentors receive an allowance of **EUR 60/month** per mentee (maximum 2 mentees at a time).
+
+Mentor capacity exceptions for HACCP trainers are defined in **Section 13.4**.
 
 ### 4.3. Probation Period
 
@@ -206,6 +212,8 @@ Overtime is permitted only with employee consent (except emergencies). Pay:
 
 **Annual overtime cap:** no more than **144 hours** per employee (stricter internal limit; legal maximum monitored by HR).
 
+Cold-zone cutters must follow the overtime-leave planning cap in **Section 7.7**.
+
 ### 5.4. Night Work
 
 Work between 22:00 and 06:00 receives a **20%** supplement on the hourly rate (in addition to any shift premium).
@@ -238,6 +246,8 @@ All amounts in **EUR (€)**.
 ### 6.3. Subsidised Meals
 
 Production shift workers are entitled to **one hot meal per shift** up to **EUR 5.00** value (employee co-pay: **EUR 0.70**).
+
+Night-shift holiday meal co-pay top-ups are defined in **Appendix H**.
 
 ### 6.4. Transport Allowance
 
@@ -290,6 +300,10 @@ Employees with **5+ years** at the company: up to **30 calendar days** unpaid le
 ### 7.6. Study Leave
 
 Employees in accredited full-time programmes aligned with their role may receive paid study leave per employer confirmation and collective agreement (up to **15 working days** per academic year).
+
+### 7.7. Overtime During Leave Planning
+
+Cold-zone cutters in slaughter may work no more than **12 hours** of overtime in any **30-day** window immediately before approved annual leave starts. HR records the rolling total in the workforce planning system.
 
 ---
 
@@ -367,6 +381,8 @@ Disciplinary action must generally be applied **within 1 month** of discovery an
 - **Second** within 12 months — termination for breach of employment duties / loss of trust (legal review required).  
 - **Foreign object contamination** attributable to employee negligence — commission review, reprimand or termination.
 
+The third-strike sanitary-zone suspension rule is defined in **Section 20.1**.
+
 ---
 
 ## 12. Termination of Employment
@@ -428,6 +444,10 @@ Additional pay for combined roles — **at least 20%** of base salary per combin
 
 Category D and management roles in category A are posted on the internal portal for **5 business days** before external recruitment.
 
+### 13.4. Mentor Programme Exceptions
+
+Certified HACCP trainers may mentor up to **4 mentees** at the same time when assigned by the Production Director. The standard EUR 60/month allowance applies per mentee.
+
 ---
 
 ## 14. Training and Development
@@ -463,6 +483,10 @@ Issued free per norms. Employee may be charged for **negligent loss** of PPE —
 ### 15.3. Personal Hygiene in Sanitary Zones
 
 Mandatory: hand washing (min. 20 sec), disinfection, change shoes, hair covering, no jewellery or watches on the production floor.
+
+### 15.4. Sanitary Re-test Fees
+
+Employees who reschedule a failed sanitary briefing re-test outside the standard 14-day window pay a **EUR 42** administrative booking fee. The fee is waived when rescheduling is caused by employer shift changes.
 
 ---
 
@@ -509,6 +533,10 @@ Written grievances answered within **10 business days**. Employees may also cont
 
 ## 20. Final Provisions
 
+### 20.1. Cross-Reference Sanctions Schedule
+
+A **third** sanitary-zone violation within any rolling **12-month** period results in a **14-day unpaid suspension** before any termination review. This measure applies in addition to the escalation steps in Section 11.3.
+
 This Policy takes effect on the approval date and is published on the internal portal. Amendments are communicated within **5 business days**; material changes require acknowledgement signature.
 
 **Appendices (separate regulations):**
@@ -519,6 +547,16 @@ This Policy takes effect on the approval date and is published on the internal p
 - D. Leave request form  
 - E. Resignation form  
 - F. Day-1 onboarding checklist  
+- G. Q4 seasonal employee referral bonus schedule  
+- H. Night-shift holiday meal co-pay top-up schedule  
+
+### Appendix G. Q4 Seasonal Employee Referral Bonus Schedule
+
+For hires made between **1 October and 31 December**, the employee referral bonus is **EUR 387** (instead of the standard EUR 300), provided all conditions in Section 3.4 are met.
+
+### Appendix H. Night-Shift Holiday Meal Co-pay Top-up Schedule
+
+On public holidays, night-shift production workers pay an additional meal co-pay top-up of **EUR 2.15** per subsidised hot meal (on top of the standard EUR 0.70 co-pay in Section 6.3).
 
 ---
 

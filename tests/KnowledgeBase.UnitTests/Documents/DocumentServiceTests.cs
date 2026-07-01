@@ -16,6 +16,8 @@ public sealed class DocumentServiceTests
     private readonly IDocumentRepository repository = Substitute.For<IDocumentRepository>();
     private readonly ITextExtractionService extractionService = Substitute.For<ITextExtractionService>();
     private readonly IEmbeddingGenerator embeddingGenerator = Substitute.For<IEmbeddingGenerator>();
+    private readonly IDocumentSummaryGenerator documentSummaryGenerator = Substitute.For<IDocumentSummaryGenerator>();
+    private readonly IContextualEmbeddingFormatter contextualEmbeddingFormatter = Substitute.For<IContextualEmbeddingFormatter>();
     private readonly ITextChunker chunker;
 
     public DocumentServiceTests()
@@ -25,6 +27,14 @@ public sealed class DocumentServiceTests
             MaxChunkSize = 40,
             OverlapSize = 10
         }));
+
+        documentSummaryGenerator
+            .GenerateAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns("Summary text");
+
+        contextualEmbeddingFormatter
+            .Format(Arg.Any<ContextualEmbeddingRequest>())
+            .Returns(call => call.Arg<ContextualEmbeddingRequest>().Content);
     }
 
     private DocumentService CreateSut() => new(
@@ -32,6 +42,8 @@ public sealed class DocumentServiceTests
         extractionService,
         chunker,
         embeddingGenerator,
+        documentSummaryGenerator,
+        contextualEmbeddingFormatter,
         NullLogger<DocumentService>.Instance);
 
     private static UploadDocumentCommand CreateCommand() => new()
@@ -67,6 +79,8 @@ public sealed class DocumentServiceTests
 
         await embeddingGenerator.Received(1)
             .GenerateAsync(Arg.Is<IReadOnlyList<string>>(list => list.Count == result.ChunkCount), Arg.Any<CancellationToken>());
+        await documentSummaryGenerator.Received(1)
+            .GenerateAsync("HR Policy", Arg.Any<string>(), Arg.Any<CancellationToken>());
         await repository.Received(1).AddAsync(Arg.Any<Document>(), Arg.Any<CancellationToken>());
     }
 

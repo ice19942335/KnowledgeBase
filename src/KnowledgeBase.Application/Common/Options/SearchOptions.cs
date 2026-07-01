@@ -4,13 +4,23 @@ public class SearchOptions
 {
     public const string SectionName = "Search";
 
-    /// <summary>
-    /// Default number of chunks returned by a semantic search.
-    /// </summary>
+    public int RetrievalTopK { get; set; } = 20;
+
+    public int FinalTopK { get; set; } = 5;
+
     public int DefaultTopK { get; set; } = 5;
 
-    /// <summary>
-    /// Hard upper bound for the number of chunks a single request may return.
-    /// </summary>
     public int MaxTopK { get; set; } = 20;
+
+    public double MinSimilarityScore { get; set; } = 0.35;
+
+    public bool HybridSearchEnabled { get; set; } = true;
+
+    public int RrfK { get; set; } = 60;
+
+    public int NeighborExpansionRadius { get; set; } = 1;
+
+    public bool RerankingEnabled { get; set; } = true;
+
+    public int RerankingCandidateLimit { get; set; } = 15;
 }

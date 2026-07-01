@@ -15,6 +15,8 @@ public sealed class IngestionService
     private readonly ITextExtractionService textExtractionService;
     private readonly ITextChunker textChunker;
     private readonly IEmbeddingGenerator embeddingGenerator;
+    private readonly IDocumentSummaryGenerator documentSummaryGenerator;
+    private readonly IContextualEmbeddingFormatter contextualEmbeddingFormatter;
     private readonly IAiAvailabilityState aiAvailabilityState;
 
     public IngestionService(
@@ -22,12 +24,16 @@ public sealed class IngestionService
         ITextExtractionService textExtractionService,
         ITextChunker textChunker,
         IEmbeddingGenerator embeddingGenerator,
+        IDocumentSummaryGenerator documentSummaryGenerator,
+        IContextualEmbeddingFormatter contextualEmbeddingFormatter,
         IAiAvailabilityState aiAvailabilityState)
     {
         this.fileStorage = fileStorage;
         this.textExtractionService = textExtractionService;
         this.textChunker = textChunker;
         this.embeddingGenerator = embeddingGenerator;
+        this.documentSummaryGenerator = documentSummaryGenerator;
+        this.contextualEmbeddingFormatter = contextualEmbeddingFormatter;
         this.aiAvailabilityState = aiAvailabilityState;
     }
 
@@ -54,12 +60,28 @@ public sealed class IngestionService
             return Array.Empty<GeneratedChunk>();
         }
 
-        var embeddings = await embeddingGenerator.GenerateAsync(chunks, cancellationToken);
+        var summary = await documentSummaryGenerator.GenerateAsync(
+            message.DocumentName,
+            text,
+            cancellationToken);
+
+        var embeddingInputs = chunks
+            .Select((chunk, index) => contextualEmbeddingFormatter.Format(new ContextualEmbeddingRequest(
+                message.DocumentName,
+                message.FileName,
+                index,
+                chunks.Count,
+                chunk.Content,
+                chunk.SectionTitle,
+                summary)))
+            .ToList();
+
+        var embeddings = await embeddingGenerator.GenerateAsync(embeddingInputs, cancellationToken);
 
         var generated = new List<GeneratedChunk>(chunks.Count);
         for (var index = 0; index < chunks.Count; index++)
         {
-            generated.Add(new GeneratedChunk(index, chunks[index], embeddings[index]));
+            generated.Add(new GeneratedChunk(index, chunks[index].Content, embeddings[index]));
         }
 
         return generated;

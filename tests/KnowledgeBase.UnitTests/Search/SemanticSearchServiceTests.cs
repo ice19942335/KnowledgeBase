@@ -12,11 +12,26 @@ public sealed class SemanticSearchServiceTests
 {
     private readonly IEmbeddingGenerator embeddingGenerator = Substitute.For<IEmbeddingGenerator>();
     private readonly IChunkSearchRepository searchRepository = Substitute.For<IChunkSearchRepository>();
+    private readonly IChunkReranker chunkReranker = Substitute.For<IChunkReranker>();
 
-    private SemanticSearchService CreateSut(SearchOptions? options = null) => new(
-        embeddingGenerator,
-        searchRepository,
-        Options.Create(options ?? new SearchOptions { DefaultTopK = 5, MaxTopK = 20 }));
+    private SemanticSearchService CreateSut(SearchOptions? options = null)
+    {
+        var retrievalPipeline = new ChunkRetrievalPipeline(
+            searchRepository,
+            chunkReranker,
+            Options.Create(options ?? new SearchOptions
+            {
+                RetrievalTopK = 20,
+                FinalTopK = 5,
+                DefaultTopK = 5,
+                MaxTopK = 20,
+                HybridSearchEnabled = false,
+                NeighborExpansionRadius = 0,
+                RerankingEnabled = false
+            }));
+
+        return new SemanticSearchService(embeddingGenerator, retrievalPipeline);
+    }
 
     [Fact]
     public async Task SearchAsync_WithEmptyQuery_Throws()
@@ -28,18 +43,32 @@ public sealed class SemanticSearchServiceTests
     }
 
     [Fact]
-    public async Task SearchAsync_WhenTopKMissing_UsesDefault()
+    public async Task SearchAsync_WhenTopKMissing_UsesDefaultFinalTopK()
     {
         embeddingGenerator.GenerateAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(new[] { 0.1f });
-        searchRepository.SearchAsync(Arg.Any<float[]>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+        searchRepository.SearchVectorAsync(Arg.Any<float[]>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<ChunkMatch>());
+        searchRepository.SearchKeywordAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<ChunkMatch>());
 
-        var sut = CreateSut(new SearchOptions { DefaultTopK = 7, MaxTopK = 20 });
+        var sut = CreateSut(new SearchOptions
+        {
+            RetrievalTopK = 20,
+            FinalTopK = 7,
+            DefaultTopK = 7,
+            MaxTopK = 20,
+            HybridSearchEnabled = false,
+            RerankingEnabled = false
+        });
 
         await sut.SearchAsync("vacation", null, CancellationToken.None);
 
-        await searchRepository.Received(1).SearchAsync(Arg.Any<float[]>(), 7, Arg.Any<CancellationToken>());
+        await chunkReranker.Received(1).RerankAsync(
+            "vacation",
+            Arg.Any<IReadOnlyList<RankedChunkCandidate>>(),
+            7,
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -47,14 +76,28 @@ public sealed class SemanticSearchServiceTests
     {
         embeddingGenerator.GenerateAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(new[] { 0.1f });
-        searchRepository.SearchAsync(Arg.Any<float[]>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+        searchRepository.SearchVectorAsync(Arg.Any<float[]>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<ChunkMatch>());
+        searchRepository.SearchKeywordAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<ChunkMatch>());
 
-        var sut = CreateSut(new SearchOptions { DefaultTopK = 5, MaxTopK = 10 });
+        var sut = CreateSut(new SearchOptions
+        {
+            RetrievalTopK = 20,
+            FinalTopK = 5,
+            DefaultTopK = 5,
+            MaxTopK = 10,
+            HybridSearchEnabled = false,
+            RerankingEnabled = false
+        });
 
         await sut.SearchAsync("vacation", 999, CancellationToken.None);
 
-        await searchRepository.Received(1).SearchAsync(Arg.Any<float[]>(), 10, Arg.Any<CancellationToken>());
+        await chunkReranker.Received(1).RerankAsync(
+            "vacation",
+            Arg.Any<IReadOnlyList<RankedChunkCandidate>>(),
+            10,
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -64,10 +107,20 @@ public sealed class SemanticSearchServiceTests
             .Returns(new[] { 0.1f });
 
         var documentId = Guid.NewGuid();
-        searchRepository.SearchAsync(Arg.Any<float[]>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+        searchRepository.SearchVectorAsync(Arg.Any<float[]>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(new[]
             {
                 new ChunkMatch(documentId, "HR Policy", "hr.pdf", 0, "25 vacation days", 0.92)
+            });
+        chunkReranker.RerankAsync(
+                Arg.Any<string>(),
+                Arg.Any<IReadOnlyList<RankedChunkCandidate>>(),
+                Arg.Any<int>(),
+                Arg.Any<CancellationToken>())
+            .Returns(call =>
+            {
+                var candidates = call.Arg<IReadOnlyList<RankedChunkCandidate>>();
+                return candidates.Select(candidate => candidate with { Score = 0.92 }).ToList();
             });
 
         var sut = CreateSut();
