@@ -52,6 +52,12 @@ jobs:
             -f docker-compose.yml \
             -f docker-compose.traefik.yml \
             --env-file .env \
+            down --remove-orphans
+
+          docker compose \
+            -f docker-compose.yml \
+            -f docker-compose.traefik.yml \
+            --env-file .env \
             up -d --build --remove-orphans
 
       - name: Remove generated .env
