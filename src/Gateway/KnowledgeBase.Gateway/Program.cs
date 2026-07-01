@@ -43,10 +43,15 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services
+var reverseProxyBuilder = builder.Services
     .AddReverseProxy()
-    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"))
-    .AddServiceDiscoveryDestinationResolver();
+    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+
+// Aspire local dev resolves https+http:// destinations; Docker uses plain http:// in Production.
+if (builder.Environment.IsDevelopment())
+{
+    reverseProxyBuilder.AddServiceDiscoveryDestinationResolver();
+}
 
 var app = builder.Build();
 

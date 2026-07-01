@@ -147,11 +147,8 @@ services:
         ASSEMBLY_NAME: KnowledgeBase.Gateway
     environment:
       <<: *dotnet-environment
-      ReverseProxy__Clusters__identity-cluster__Destinations__identity-api__Address: http://identity-api:8080
-      ReverseProxy__Clusters__tenant-cluster__Destinations__tenant-api__Address: http://tenant-api:8080
-      ReverseProxy__Clusters__document-cluster__Destinations__document-api__Address: http://document-api:8080
-      ReverseProxy__Clusters__search-cluster__Destinations__search-api__Address: http://search-api:8080
-      ReverseProxy__Clusters__chat-cluster__Destinations__chat-api__Address: http://chat-api:8080
+      ASPNETCORE_ENVIRONMENT: Production
+      DOTNET_ENVIRONMENT: Production
     depends_on:
       - identity-api
       - tenant-api
