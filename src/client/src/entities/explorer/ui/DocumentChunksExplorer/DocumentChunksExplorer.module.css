@@ -1,7 +1,14 @@
-.section {
+.section,
+.sectionSidebar {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.sectionSidebar {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .summary {

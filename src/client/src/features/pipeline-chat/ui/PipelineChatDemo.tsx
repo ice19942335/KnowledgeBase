@@ -52,7 +52,10 @@ export function PipelineChatDemo() {
             )}
           </article>
 
-          <PipelineTraceTimeline steps={data.steps} totalDurationMs={data.totalDurationMs} />
+          <div className={styles.process}>
+            <h3 className={styles.processTitle}>Pipeline trace</h3>
+            <PipelineTraceTimeline steps={data.steps} totalDurationMs={data.totalDurationMs} />
+          </div>
         </div>
       )}
     </section>

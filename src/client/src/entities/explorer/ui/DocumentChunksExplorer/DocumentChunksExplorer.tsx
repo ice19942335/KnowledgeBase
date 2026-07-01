@@ -5,12 +5,19 @@ import styles from "./DocumentChunksExplorer.module.css";
 interface DocumentChunksExplorerProps {
   documents: DocumentChunksGroup[];
   totalChunks: number;
+  variant?: "default" | "sidebar";
 }
 
-export function DocumentChunksExplorer({ documents, totalChunks }: DocumentChunksExplorerProps) {
+export function DocumentChunksExplorer({
+  documents,
+  totalChunks,
+  variant = "default",
+}: DocumentChunksExplorerProps) {
   const [expandedDocumentId, setExpandedDocumentId] = useState<string | null>(
     documents[0]?.documentId ?? null,
   );
+
+  const sectionClass = variant === "sidebar" ? styles.sectionSidebar : styles.section;
 
   if (documents.length === 0) {
     return (
@@ -21,10 +28,12 @@ export function DocumentChunksExplorer({ documents, totalChunks }: DocumentChunk
   }
 
   return (
-    <section className={styles.section} data-testid="document-chunks-explorer">
-      <p className={styles.summary}>
-        {documents.length} documents · {totalChunks} chunks indexed
-      </p>
+    <section className={sectionClass} data-testid="document-chunks-explorer">
+      {variant === "default" && (
+        <p className={styles.summary}>
+          {documents.length} documents · {totalChunks} chunks indexed
+        </p>
+      )}
 
       <ul className={styles.documentList}>
         {documents.map((document) => {

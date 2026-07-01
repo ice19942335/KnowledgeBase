@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { formatJson, PipelineTraceTimeline } from "./PipelineTraceTimeline";
 
 describe("formatJson", () => {
@@ -9,7 +10,7 @@ describe("formatJson", () => {
 });
 
 describe("PipelineTraceTimeline", () => {
-  it("renders steps with input and output payloads", () => {
+  it("renders steps with collapsible input and output payloads", async () => {
     render(
       <PipelineTraceTimeline
         totalDurationMs={120}
@@ -28,8 +29,44 @@ describe("PipelineTraceTimeline", () => {
 
     expect(screen.getByTestId("pipeline-total-duration")).toHaveTextContent("120 ms");
     expect(screen.getByTestId("pipeline-step-1")).toBeInTheDocument();
-    expect(screen.getByTestId("pipeline-step-1-input")).toHaveTextContent("null");
     expect(screen.getByTestId("pipeline-step-1-output")).toHaveTextContent("tenantId");
+
+    await userEvent.click(screen.getByTestId("pipeline-step-1-tab-input"));
+    expect(screen.getByTestId("pipeline-step-1-input")).toHaveTextContent("null");
+  });
+
+  it("renders step navigation pills", async () => {
+    render(
+      <PipelineTraceTimeline
+        steps={[
+          {
+            order: 1,
+            name: "tenant.resolve",
+            description: "Resolve tenant",
+            durationMs: 0,
+            input: null,
+            output: {},
+          },
+          {
+            order: 2,
+            name: "conversation.load",
+            description: "Load conversation",
+            durationMs: 5,
+            input: {},
+            output: {},
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByTestId("pipeline-step-nav-1")).toBeInTheDocument();
+    expect(screen.getByTestId("pipeline-step-nav-2")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByTestId("pipeline-step-1-toggle"));
+    expect(screen.getByTestId("pipeline-step-1")).toHaveAttribute("data-expanded", "false");
+
+    await userEvent.click(screen.getByTestId("pipeline-step-nav-2"));
+    expect(screen.getByTestId("pipeline-step-2")).toHaveAttribute("data-expanded", "true");
   });
 
   it("renders nested search steps from output.nestedSteps", () => {

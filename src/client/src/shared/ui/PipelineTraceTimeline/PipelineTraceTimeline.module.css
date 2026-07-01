@@ -4,16 +4,73 @@
   gap: 1rem;
 }
 
+.timelineHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 .summary {
   margin: 0;
   font-size: 0.9rem;
   color: #4b5563;
 }
 
+.stepNav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.stepNavItem,
+.stepNavItemActive {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid #dbeafe;
+  background-color: #ffffff;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.stepNavItem:hover {
+  background-color: #eff6ff;
+}
+
+.stepNavItemActive {
+  border-color: #2563eb;
+  background-color: #dbeafe;
+  color: #1e3a8a;
+  font-weight: 600;
+}
+
+.stepNavOrder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background-color: #2563eb;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.stepNavName {
+  max-width: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.5rem;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -21,67 +78,111 @@
 
 .step {
   border: 1px solid #dbeafe;
-  border-radius: 12px;
+  border-radius: 10px;
   background-color: #f8fbff;
-  padding: 1rem;
+  overflow: hidden;
 }
 
 .stepHeader {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto 1fr auto auto;
   gap: 0.75rem;
   align-items: start;
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.stepHeader:hover {
+  background-color: #eff6ff;
+}
+
+.stepInfo {
+  min-width: 0;
 }
 
 .stepOrder {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  width: 1.75rem;
+  height: 1.75rem;
   border-radius: 999px;
   background-color: #2563eb;
   color: #ffffff;
   font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
 }
 
 .stepName {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: #111827;
 }
 
 .stepDescription {
-  margin: 0.25rem 0 0;
+  margin: 0.2rem 0 0;
   color: #6b7280;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .duration {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: #1d4ed8;
+  white-space: nowrap;
 }
 
-.payloadGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-  margin-top: 1rem;
+.expandIcon {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #6b7280;
+  line-height: 1;
 }
 
-.payloadBlock {
+.stepBody {
+  padding: 0 1rem 1rem;
+}
+
+.payloadSection {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.payloadTitle {
-  margin: 0;
+.payloadTabs {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.2rem;
+  border-radius: 8px;
+  background-color: #e5e7eb;
+  width: fit-content;
+}
+
+.payloadTab,
+.payloadTabActive {
+  padding: 0.35rem 0.85rem;
+  border: 0;
+  border-radius: 6px;
   font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #374151;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  color: #4b5563;
+}
+
+.payloadTab:hover {
+  color: #111827;
+}
+
+.payloadTabActive {
+  background-color: #ffffff;
+  color: #111827;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 .payloadContent {
@@ -95,12 +196,8 @@
   overflow-x: auto;
   white-space: pre-wrap;
   word-break: break-word;
-}
-
-@media (max-width: 900px) {
-  .payloadGrid {
-    grid-template-columns: 1fr;
-  }
+  max-height: 24rem;
+  overflow-y: auto;
 }
 
 .nestedTimeline {
@@ -119,7 +216,7 @@
 .nestedList {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -127,7 +224,25 @@
 
 .nestedStep {
   border: 1px solid #e0e7ff;
-  border-radius: 10px;
+  border-radius: 8px;
   background-color: #eef2ff;
-  padding: 0.875rem;
+  overflow: hidden;
+}
+
+.nestedStep .stepHeader:hover {
+  background-color: #e0e7ff;
+}
+
+@media (max-width: 600px) {
+  .stepHeader {
+    grid-template-columns: auto 1fr auto;
+  }
+
+  .expandIcon {
+    display: none;
+  }
+
+  .stepNavName {
+    max-width: 6rem;
+  }
 }

@@ -86,8 +86,8 @@ HR_Policy.pdf
 * Feature-Sliced Design
 * Zustand (state management)
 * TanStack Query (server state)
-* Pages: Documents, Search, Chat, **Explorer** (`/explorer`) — browse indexed chunks and
-  visualize the RAG pipeline step-by-step with JSON inputs/outputs
+* Pages: Documents, Search, Chat, **Explorer** (`/explorer`) — split view with
+  pipeline trace (left) and indexed chunks (right); collapsible steps with Input/Output tabs
 
 ## AI
 
@@ -1346,9 +1346,10 @@ Mapped against the full roadmap above.
 * **Swagger** on every API service with `X-Tenant-Id` header and JWT Bearer.
 * **Frontend**: Documents (upload/list/delete), Search, Chat, and **Explorer**
   (`/explorer`) pages (React + TS, Feature-Sliced Design, TanStack Query).
-  Explorer shows all indexed document chunks and a pipeline trace for each chat
-  request (tenant → conversation → search → prompt → LLM → persist, with nested
-  search steps and JSON input/output per step).
+  Explorer uses a split layout: chat pipeline trace on the left (question, answer,
+  collapsible steps with Input/Output tabs) and indexed chunks on the right.
+  Pipeline steps: tenant → conversation → search → prompt → LLM → persist, with
+  nested search steps and JSON payloads per step.
 * **Tests**: 44 backend unit tests (chunker, contextual embeddings, hybrid search,
   keyword search) and 13 frontend tests (Button, DocumentList, documentPolling,
   PipelineTraceTimeline, DocumentChunksExplorer).
