@@ -32,8 +32,18 @@ var googleOptions = builder.Configuration
     .GetSection(GoogleOAuthOptions.SectionName)
     .Get<GoogleOAuthOptions>() ?? new GoogleOAuthOptions();
 
-builder.Services.AddAuthentication()
-    .AddGoogle(options =>
+builder.Services
+    .AddOptions<GoogleOAuthOptions>()
+    .Bind(builder.Configuration.GetSection(GoogleOAuthOptions.SectionName));
+
+var googleOAuthConfigured = !string.IsNullOrWhiteSpace(googleOptions.ClientId)
+    && !string.IsNullOrWhiteSpace(googleOptions.ClientSecret);
+
+var authenticationBuilder = builder.Services.AddAuthentication();
+
+if (googleOAuthConfigured)
+{
+    authenticationBuilder.AddGoogle(options =>
     {
         options.ClientId = googleOptions.ClientId;
         options.ClientSecret = googleOptions.ClientSecret;
@@ -41,6 +51,7 @@ builder.Services.AddAuthentication()
         options.Scope.Add("email");
         options.SaveTokens = true;
     });
+}
 
 builder.Services.AddOpenIddict()
     .AddCore(options =>

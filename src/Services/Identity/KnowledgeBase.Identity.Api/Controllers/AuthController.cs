@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
 using static OpenIddict.Abstractions.OpenIddictConstants;
@@ -16,21 +17,34 @@ public sealed class AuthController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> userManager;
     private readonly SignInManager<ApplicationUser> signInManager;
+    private readonly GoogleOAuthOptions googleOptions;
 
     public AuthController(
         UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager)
+        SignInManager<ApplicationUser> signInManager,
+        IOptions<GoogleOAuthOptions> googleOptions)
     {
         this.userManager = userManager;
         this.signInManager = signInManager;
+        this.googleOptions = googleOptions.Value;
     }
 
     /// <summary>
     /// Initiates the Google OAuth login flow.
     /// </summary>
     [HttpGet("login/google")]
+    [ProducesResponseType(StatusCodes.Status302Found)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
     public IActionResult LoginGoogle([FromQuery] string? returnUrl = null)
     {
+        if (string.IsNullOrWhiteSpace(googleOptions.ClientId)
+            || string.IsNullOrWhiteSpace(googleOptions.ClientSecret))
+        {
+            return Problem(
+                "Google OAuth is not configured. Set Google:ClientId and Google:ClientSecret.",
+                statusCode: StatusCodes.Status503ServiceUnavailable);
+        }
+
         var properties = signInManager.ConfigureExternalAuthenticationProperties(
             GoogleDefaults.AuthenticationScheme,
             Url.Action(nameof(GoogleCallback), new { returnUrl }));
