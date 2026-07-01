@@ -18,7 +18,15 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy(clientCorsPolicy, policy =>
     {
-        if (builder.Environment.IsDevelopment())
+        var corsOptions = builder.Configuration
+            .GetSection(CorsOptions.SectionName)
+            .Get<CorsOptions>() ?? new CorsOptions();
+
+        if (corsOptions.AllowedOrigins.Length > 0)
+        {
+            policy.WithOrigins(corsOptions.AllowedOrigins);
+        }
+        else if (builder.Environment.IsDevelopment())
         {
             policy.SetIsOriginAllowed(origin =>
             {
@@ -29,14 +37,6 @@ builder.Services.AddCors(options =>
 
                 return uri.Host is "localhost" or "127.0.0.1";
             });
-        }
-        else
-        {
-            var corsOptions = builder.Configuration
-                .GetSection(CorsOptions.SectionName)
-                .Get<CorsOptions>() ?? new CorsOptions();
-
-            policy.WithOrigins(corsOptions.AllowedOrigins);
         }
 
         policy.AllowAnyHeader().AllowAnyMethod();

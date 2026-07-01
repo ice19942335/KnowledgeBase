@@ -1356,6 +1356,39 @@ Mapped against the full roadmap above.
 * `Directory.Build.props` with `TreatWarningsAsErrors` (NU19xx audit warnings
   excluded for transitive Aspire dependencies).
 * Global exception handling via `IExceptionHandler` + ProblemDetails.
+* **Production Docker deploy**: `deploy/docker-compose.yml` (full stack +
+  reverse proxy on port 80), shared `deploy/Dockerfile.dotnet`, React
+  `deploy/Dockerfile.client`, GitHub Actions CI + deploy to self-hosted runner
+  (`knowledgebase` label) with secrets in the `prod` environment.
+
+## Production deployment
+
+Prerequisites on the server (`46.62.249.94`):
+
+1. Self-hosted runner registered for this repo with label `knowledgebase` (user
+   `runner`, member of the `docker` group).
+2. Cloudflare DNS: `kb.bookly.lv` → server IP (proxied).
+3. Shared **Traefik** (`bookly-proxy` network, resolver `letsencrypt`) routes
+   `kb.bookly.lv` via Docker labels — see `deploy/docker-compose.traefik.yml`
+   (included automatically in the deploy workflow).
+
+GitHub **Environment `prod`**:
+
+| Type | Name |
+|------|------|
+| Secrets | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `RABBITMQ_USER`, `RABBITMQ_PASSWORD`, `GEMINI_API_KEY` |
+| Variables | `CORS_ALLOWED_ORIGINS` (`https://kb.bookly.lv`), `VITE_API_BASE_URL` (empty = same-origin `/api`) |
+
+Push to `main` runs tests on GitHub-hosted runners, then deploy on the
+self-hosted runner: `docker compose up -d --build`.
+
+Manual smoke test on the server:
+
+```bash
+cd deploy
+docker compose --env-file .env -f docker-compose.yml ps
+curl -I http://localhost/
+```
 
 ## Not Done (remaining work)
 
@@ -1367,8 +1400,7 @@ Mapped against the full roadmap above.
   pgvector.
 * **Phase 15 — Observability** — OpenTelemetry is wired via ServiceDefaults but
   Prometheus/Grafana/Loki/Tempo dashboards are not configured.
-* **Full-stack `docker-compose.yml`** with per-service Dockerfiles, Helm charts,
-  and Kubernetes manifests not created.
+* **Helm charts and Kubernetes manifests** not created.
 * **Integration tests** (Testcontainers) not implemented; only unit tests.
 * **Rate limiting** on the Gateway is not configured.
 * **Frontend auth flow** — the React client does not yet integrate with the

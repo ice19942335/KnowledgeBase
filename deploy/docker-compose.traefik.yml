@@ -1,0 +1,31 @@
+# Traefik overlay for the shared bookly Traefik instance (Docker provider).
+# Network: bookly-proxy | Resolver: letsencrypt | Entrypoints: web / websecure
+#
+# Manual:
+#   docker compose -f docker-compose.yml -f docker-compose.traefik.yml --env-file .env up -d --build
+
+services:
+  reverse-proxy:
+    ports: !reset []
+    networks:
+      - default
+      - traefik
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${TRAEFIK_NETWORK:-bookly-proxy}
+      - traefik.http.routers.knowledgebase.rule=Host(`kb.bookly.lv`)
+      - traefik.http.routers.knowledgebase.entrypoints=websecure
+      - traefik.http.routers.knowledgebase.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-letsencrypt}
+      - traefik.http.routers.knowledgebase.service=knowledgebase
+      - traefik.http.routers.knowledgebase-http.rule=Host(`kb.bookly.lv`)
+      - traefik.http.routers.knowledgebase-http.entrypoints=web
+      - traefik.http.routers.knowledgebase-http.middlewares=knowledgebase-redirect-https
+      - traefik.http.routers.knowledgebase-http.service=knowledgebase
+      - traefik.http.middlewares.knowledgebase-redirect-https.redirectscheme.scheme=https
+      - traefik.http.middlewares.knowledgebase-redirect-https.redirectscheme.permanent=true
+      - traefik.http.services.knowledgebase.loadbalancer.server.port=80
+
+networks:
+  traefik:
+    external: true
+    name: ${TRAEFIK_NETWORK:-bookly-proxy}

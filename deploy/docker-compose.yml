@@ -1,0 +1,184 @@
+x-dotnet-service: &dotnet-service
+  restart: unless-stopped
+  environment: &dotnet-environment
+    ASPNETCORE_ENVIRONMENT: Development
+    DOTNET_ENVIRONMENT: Development
+    ConnectionStrings__rabbitmq: amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672/
+    Cors__AllowedOrigins__0: ${CORS_ALLOWED_ORIGINS}
+
+services:
+  postgres:
+    extends:
+      file: docker-compose.infra.yml
+      service: postgres
+
+  rabbitmq:
+    extends:
+      file: docker-compose.infra.yml
+      service: rabbitmq
+
+  redis:
+    extends:
+      file: docker-compose.infra.yml
+      service: redis
+
+  identity-api:
+    <<: *dotnet-service
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.dotnet
+      args:
+        PROJECT_PATH: src/Services/Identity/KnowledgeBase.Identity.Api/KnowledgeBase.Identity.Api.csproj
+        ASSEMBLY_NAME: KnowledgeBase.Identity.Api
+    environment:
+      <<: *dotnet-environment
+      ConnectionStrings__identitydb: Host=postgres;Port=5432;Database=identitydb;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      Google__ClientId: ${GOOGLE_CLIENT_ID:-}
+      Google__ClientSecret: ${GOOGLE_CLIENT_SECRET:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  tenant-api:
+    <<: *dotnet-service
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.dotnet
+      args:
+        PROJECT_PATH: src/Services/Tenant/KnowledgeBase.Tenant.Api/KnowledgeBase.Tenant.Api.csproj
+        ASSEMBLY_NAME: KnowledgeBase.Tenant.Api
+    environment:
+      <<: *dotnet-environment
+      ConnectionStrings__tenantdb: Host=postgres;Port=5432;Database=tenantdb;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  document-api:
+    <<: *dotnet-service
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.dotnet
+      args:
+        PROJECT_PATH: src/Services/Document/KnowledgeBase.Document.Api/KnowledgeBase.Document.Api.csproj
+        ASSEMBLY_NAME: KnowledgeBase.Document.Api
+    environment:
+      <<: *dotnet-environment
+      ConnectionStrings__documentdb: Host=postgres;Port=5432;Database=documentdb;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      FileStorage__RootPath: /var/lib/knowledgebase/blobs
+    volumes:
+      - blobdata:/var/lib/knowledgebase/blobs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  ingestion-worker:
+    <<: *dotnet-service
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.dotnet
+      args:
+        PROJECT_PATH: src/Services/Ingestion/KnowledgeBase.Ingestion.Worker/KnowledgeBase.Ingestion.Worker.csproj
+        ASSEMBLY_NAME: KnowledgeBase.Ingestion.Worker
+    environment:
+      <<: *dotnet-environment
+      FileStorage__RootPath: /var/lib/knowledgebase/blobs
+      Gemini__ApiKey: ${GEMINI_API_KEY}
+      Gemini__EmbeddingModel: gemini-embedding-001
+      Gemini__ChatModel: gemini-3.5-flash
+      Gemini__EmbeddingDimensions: "1536"
+    volumes:
+      - blobdata:/var/lib/knowledgebase/blobs
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  search-api:
+    <<: *dotnet-service
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.dotnet
+      args:
+        PROJECT_PATH: src/Services/Search/KnowledgeBase.Search.Api/KnowledgeBase.Search.Api.csproj
+        ASSEMBLY_NAME: KnowledgeBase.Search.Api
+    environment:
+      <<: *dotnet-environment
+      ConnectionStrings__searchdb: Host=postgres;Port=5432;Database=searchdb;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      Gemini__ApiKey: ${GEMINI_API_KEY}
+      Gemini__EmbeddingModel: gemini-embedding-001
+      Gemini__EmbeddingDimensions: "1536"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  chat-api:
+    <<: *dotnet-service
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.dotnet
+      args:
+        PROJECT_PATH: src/Services/Chat/KnowledgeBase.Chat.Api/KnowledgeBase.Chat.Api.csproj
+        ASSEMBLY_NAME: KnowledgeBase.Chat.Api
+    environment:
+      <<: *dotnet-environment
+      ConnectionStrings__chatdb: Host=postgres;Port=5432;Database=chatdb;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      Gemini__ApiKey: ${GEMINI_API_KEY}
+      Gemini__ChatModel: gemini-3.5-flash
+      Gemini__EmbeddingModel: gemini-embedding-001
+      Gemini__EmbeddingDimensions: "1536"
+      Services__search-api__http__0: http://search-api:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+      search-api:
+        condition: service_started
+
+  gateway:
+    <<: *dotnet-service
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.dotnet
+      args:
+        PROJECT_PATH: src/Gateway/KnowledgeBase.Gateway/KnowledgeBase.Gateway.csproj
+        ASSEMBLY_NAME: KnowledgeBase.Gateway
+    environment:
+      <<: *dotnet-environment
+      ReverseProxy__Clusters__identity-cluster__Destinations__identity-api__Address: http://identity-api:8080
+      ReverseProxy__Clusters__tenant-cluster__Destinations__tenant-api__Address: http://tenant-api:8080
+      ReverseProxy__Clusters__document-cluster__Destinations__document-api__Address: http://document-api:8080
+      ReverseProxy__Clusters__search-cluster__Destinations__search-api__Address: http://search-api:8080
+      ReverseProxy__Clusters__chat-cluster__Destinations__chat-api__Address: http://chat-api:8080
+    depends_on:
+      - identity-api
+      - tenant-api
+      - document-api
+      - search-api
+      - chat-api
+
+  client:
+    restart: unless-stopped
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.client
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
+
+  reverse-proxy:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      # Fallback when Traefik overlay is not used (local/manual testing only).
+      - "8088:80"
+    volumes:
+      - ./nginx/reverse-proxy.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - gateway
+      - client
+
+volumes:
+  pgdata:
+  blobdata:

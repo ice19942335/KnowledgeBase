@@ -1,0 +1,8 @@
+CREATE DATABASE identitydb;
+CREATE DATABASE tenantdb;
+CREATE DATABASE documentdb;
+CREATE DATABASE searchdb;
+CREATE DATABASE chatdb;
+
+\connect searchdb
+CREATE EXTENSION IF NOT EXISTS vector;

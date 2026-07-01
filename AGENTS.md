@@ -144,7 +144,7 @@ GET  /api/chat/ai/status     # AI availability banner
 - Frontend Google OAuth integration
 - Integration tests (Testcontainers)
 - Gateway rate limiting
-- Full docker-compose per-service images / Helm / K8s
+- Helm / K8s manifests
 
 ## Testing
 

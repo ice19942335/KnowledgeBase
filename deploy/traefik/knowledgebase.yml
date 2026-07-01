@@ -1,0 +1,47 @@
+# Traefik dynamic configuration for KnowledgeBase (kb.bookly.lv).
+#
+# Prerequisites:
+#   1. KnowledgeBase stack exposes reverse-proxy on host port 8088 (default compose).
+#   2. Traefik file provider watches the directory where this file is mounted.
+#
+# Install (adjust paths to your Traefik setup):
+#   sudo cp knowledgebase.yml /path/to/traefik/dynamic/knowledgebase.yml
+#   docker exec traefik kill -HUP 1
+#
+# Discover Traefik entrypoints and cert resolver:
+#   docker inspect traefik
+#   docker logs traefik 2>&1 | head -50
+#
+# If Traefik runs in Docker, the host gateway from inside the container is usually:
+#   Linux: 172.17.0.1
+#   Docker Desktop: host.docker.internal
+
+http:
+  routers:
+    knowledgebase:
+      rule: Host(`kb.bookly.lv`)
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      service: knowledgebase
+
+    knowledgebase-http:
+      rule: Host(`kb.bookly.lv`)
+      entryPoints:
+        - web
+      middlewares:
+        - knowledgebase-redirect-https
+      service: knowledgebase
+
+  middlewares:
+    knowledgebase-redirect-https:
+      redirectScheme:
+        scheme: https
+        permanent: true
+
+  services:
+    knowledgebase:
+      loadBalancer:
+        servers:
+          - url: http://172.17.0.1:8088

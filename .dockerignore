@@ -1,0 +1,15 @@
+.git
+.github
+**/.vs
+**/bin
+**/obj
+**/node_modules
+src/client/dist
+src/AppHost
+tests
+assets
+.cursor
+.vscode
+README.md
+AGENTS.md
+*.md
