@@ -86,8 +86,19 @@ HR_Policy.pdf
 * Feature-Sliced Design
 * Zustand (state management)
 * TanStack Query (server state)
-* Pages: Documents, Search, Chat, **Explorer** (`/explorer`) — split view with
-  pipeline trace (left) and indexed chunks (right); collapsible steps with Input/Output tabs
+* Pages: Documents, Search, Chat, **Explorer** (`/explorer`) — each page includes
+  a short summary and an expandable **How it works under the hood** guide:
+  * **Documents** — upload/list/delete; triggers async ingestion
+    (extract → chunk → contextual embed → pgvector index via RabbitMQ).
+  * **Search** — hybrid vector + keyword retrieval, RRF merge, neighbor expansion,
+    LLM rerank; returns ranked passages (not a generated answer).
+  * **Chat** — RAG: Search retrieves context → prompt → Gemini answer with sources
+    and conversation history.
+  * **Explorer** — split view: traced chat pipeline (left) and source-document
+    chunks (right) loaded after each traced answer; per-document subtabs when
+    multiple files contributed; under each document, **All chunks** and
+    **Used for answer** (priority order from RAG sources); collapsible steps
+    with Input/Output tabs.
 
 ## AI
 
@@ -1234,6 +1245,8 @@ If Aspire appears stuck on `Waiting for resource 'postgres' to become healthy`:
 3. Stop AppHost, remove stale Aspire containers if needed, then start again — containers use `Persistent` lifetime to reduce startup races.
 4. Wait until **document-api**, **search-api**, and **gateway** show `Running` in the dashboard before using the client URL.
 
+If **redis** shows `Running (Unhealthy)` in the Aspire dashboard, restart AppHost after a clean build. Local AppHost uses plain TCP on port `6379` (no TLS) via `WithoutHttpsCertificate()` so health checks match `docker-compose.infra.yml`. Remove the stale Redis container from Docker Desktop if the status persists after restart.
+
 MassTransit uses **v8.x** (Apache 2.0, no commercial license required for local dev).
 
 Identity Service applies EF Core migrations on startup in Development (`identitydb` schema includes ASP.NET Identity + OpenIddict tables).
@@ -1263,7 +1276,7 @@ DELETE /api/documents/{id}
 
 # Search (requires X-Tenant-Id header)
 POST   /api/search                  # { "query": "..." }
-GET    /api/search/explorer          # list indexed documents and chunks
+GET    /api/search/explorer          # list indexed chunks; optional ?documentIds= for filter
 POST   /api/search/trace             # semantic search with pipeline trace
 
 # Chat (requires X-Tenant-Id header)
@@ -1331,8 +1344,9 @@ Mapped against the full roadmap above.
   (`RerankingEnabled`). Config: `RetrievalTopK`, `FinalTopK`, `HybridSearchEnabled`.
   Explorer trace shows `search.vector`, `search.keyword`, `search.hybrid_merge`,
   `search.expand_neighbors`, `search.rerank`.
-* **RAG test document**: `assets/HR_Policy_MeatKombinat_EN.md` with cross-chunk
-  references (XREF-01..06). See `assets/QuestionExamples.md`.
+* **RAG test documents**: `assets/HR_Policy_MeatKombinat_EN.md` (XREF-01..06) and
+  `assets/Logistics_Policy_MeatKombinat_EN.md` (XREF-LOG-01..08) with cross-chunk
+  references for contextual-embedding validation. See `assets/QuestionExamples.md`.
 * **Phase 7 — RAG Chat**: retrieve → prompt → LLM via dedicated Chat service.
 * **Phase 8 — Source References**: answers return distinct source documents.
 * **Phase 9 — Chat History**: `Conversation` / `ChatMessage` entities with full
@@ -1344,15 +1358,24 @@ Mapped against the full roadmap above.
   service, `X-Tenant-Id` header middleware (single source of truth), scoped
   `ITenantContext`.
 * **Swagger** on every API service with `X-Tenant-Id` header and JWT Bearer.
-* **Frontend**: Documents (upload/list/delete), Search, Chat, and **Explorer**
-  (`/explorer`) pages (React + TS, Feature-Sliced Design, TanStack Query).
-  Explorer uses a split layout: chat pipeline trace on the left (question, answer,
-  collapsible steps with Input/Output tabs) and indexed chunks on the right.
-  Pipeline steps: tenant → conversation → search → prompt → LLM → persist, with
-  nested search steps and JSON payloads per step.
+* **Frontend**: Documents, Search, Chat, and **Explorer** (`/explorer`) pages
+  (React + TS, Feature-Sliced Design, TanStack Query). Each page shows what the
+  tab does for the user and an expandable pipeline guide (`PageGuide` component).
+  * **Documents** — `POST /api/documents` → `DocumentUploaded` → Ingestion Worker
+    (extract, chunk, Gemini embeddings) → Search indexes chunks in pgvector.
+  * **Search** — `POST /api/search` — embed query, hybrid pgvector + keyword,
+    RRF, neighbor expansion, LLM rerank; returns scored excerpts.
+  * **Chat** — `POST /api/chat` — calls Search for context, builds RAG prompt,
+    Gemini completion, source links, persists `Conversation` / `ChatMessage`.
+  * **Explorer** — `POST /api/chat/trace` first, then `GET /api/search/explorer`
+    for source documents only; split layout with full pipeline trace (tenant →
+    conversation → search → prompt → LLM → persist), nested search sub-steps,
+    and per-document chunk tabs when multiple sources are used; each document
+    panel has **All chunks** / **Used for answer** sub-tabs (latter sorted by
+    RAG priority).
 * **Tests**: 44 backend unit tests (chunker, contextual embeddings, hybrid search,
-  keyword search) and 13 frontend tests (Button, DocumentList, documentPolling,
-  PipelineTraceTimeline, DocumentChunksExplorer).
+  keyword search) and 14 frontend tests (Button, DocumentList, documentPolling,
+  PageGuide, PipelineTraceTimeline, DocumentChunksExplorer).
 * **EF migrations** for all 5 databases, each with `.Designer.cs`.
 * `Directory.Build.props` with `TreatWarningsAsErrors` (NU19xx audit warnings
   excluded for transitive Aspire dependencies).

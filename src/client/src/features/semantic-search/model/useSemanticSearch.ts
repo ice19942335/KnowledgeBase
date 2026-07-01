@@ -1,8 +1,9 @@
-import { useMutation } from "@tanstack/react-query";
+import { useSessionMutation } from "../../../shared/lib/useSessionMutation";
 import { searchChunks } from "../api/searchApi";
+import { useSearchSessionStore } from "./searchSessionStore";
 
 export function useSemanticSearch() {
-  return useMutation({
+  return useSessionMutation(useSearchSessionStore, {
     mutationFn: (query: string) => searchChunks(query),
   });
 }

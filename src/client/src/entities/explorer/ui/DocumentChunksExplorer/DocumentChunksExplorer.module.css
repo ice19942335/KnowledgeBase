@@ -101,3 +101,151 @@
   line-height: 1.5;
   color: #111827;
 }
+
+.documentTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.documentTab,
+.documentTabActive {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 100%;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid #dbeafe;
+  background-color: #ffffff;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.documentTab:hover {
+  background-color: #eff6ff;
+}
+
+.documentTabActive {
+  border-color: #2563eb;
+  background-color: #dbeafe;
+  color: #1e3a8a;
+  font-weight: 600;
+}
+
+.documentTabName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 12rem;
+}
+
+.documentTabCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background-color: rgba(37, 99, 235, 0.12);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.singleDocumentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.singleDocumentTitle {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #111827;
+}
+
+.chunkItemUsed {
+  border: 1px solid #93c5fd;
+  border-radius: 8px;
+  padding: 0.75rem;
+  background-color: #eff6ff;
+}
+
+.chunkViewTabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.chunkViewTab,
+.chunkViewTabActive {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.75rem;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: transparent;
+  font-size: 0.8rem;
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.chunkViewTab:hover {
+  color: #111827;
+}
+
+.chunkViewTabActive {
+  color: #1e40af;
+  border-bottom-color: #2563eb;
+  font-weight: 600;
+}
+
+.chunkViewTabCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.1rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background-color: #e5e7eb;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #374151;
+}
+
+.chunkViewTabActive .chunkViewTabCount {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.priorityBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  margin-right: 0.45rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 999px;
+  background-color: #2563eb;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.usedEmpty {
+  margin: 0;
+  padding: 1rem;
+  border: 1px dashed #d1d5db;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #6b7280;
+}

@@ -29,7 +29,7 @@ public interface IChunkRepository
 
     Task<IReadOnlyList<ChunkDetailDto>> ListAsync(
         Guid tenantId,
-        Guid? documentId,
+        IReadOnlyList<Guid>? documentIds,
         CancellationToken cancellationToken);
 
     Task SaveChangesAsync(CancellationToken cancellationToken);

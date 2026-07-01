@@ -39,9 +39,12 @@ public sealed class SearchController : ControllerBase
 
     [HttpGet("explorer")]
     [ProducesResponseType(typeof(SearchExplorerResult), StatusCodes.Status200OK)]
-    public async Task<ActionResult<SearchExplorerResult>> Explorer(CancellationToken cancellationToken)
+    public async Task<ActionResult<SearchExplorerResult>> Explorer(
+        [FromQuery] Guid[]? documentIds,
+        CancellationToken cancellationToken)
     {
-        var explorer = await explorerService.GetExplorerAsync(cancellationToken);
+        IReadOnlyList<Guid>? filter = documentIds is { Length: > 0 } ids ? ids : null;
+        var explorer = await explorerService.GetExplorerAsync(filter, cancellationToken);
         return Ok(explorer);
     }
 

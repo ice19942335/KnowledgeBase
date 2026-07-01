@@ -1,17 +1,19 @@
-import { useState, type FormEvent } from "react";
+import { type FormEvent } from "react";
 import { Button, MarkdownContent, PipelineTraceTimeline } from "../../../shared/ui";
 import { DocumentSourceLinks } from "../../../entities/document/ui/DocumentSourceLinks";
+import { useDraftOrSubmitted } from "../../../shared/lib/useDraftOrSubmitted";
 import { usePipelineChat } from "../model/usePipelineChat";
 import styles from "./PipelineChatDemo.module.css";
 
 export function PipelineChatDemo() {
-  const [question, setQuestion] = useState("");
-  const { mutate, data, isPending, isError } = usePipelineChat();
+  const { mutate, data, variables, isPending, isError } = usePipelineChat();
+  const { value: question, setValue: setQuestion, clearDraft } = useDraftOrSubmitted(variables);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const trimmed = question.trim();
     if (trimmed) {
+      clearDraft();
       mutate(trimmed);
     }
   };

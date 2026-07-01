@@ -47,7 +47,7 @@ React (src/client) → YARP Gateway → microservices
 - **AI**: Gemini (embeddings `gemini-embedding-001`, chat `gemini-3.5-flash`, 1536 dims). Without `Gemini:ApiKey` → HTTP 503 on AI endpoints.
 - **Contextual embeddings**: index-time wrapper (document name, LLM summary, section title) for `RETRIEVAL_DOCUMENT`; raw `Content` stored for RAG prompts.
 - **Retrieval pipeline**: hybrid vector+keyword (RRF) → neighbor expansion → LLM rerank → `FinalTopK` chunks. Config section `Search`.
-- **RAG test doc**: `assets/HR_Policy_MeatKombinat_EN.md` + `assets/QuestionExamples.md` (cross-chunk XREF scenarios).
+- **RAG test docs**: `assets/HR_Policy_MeatKombinat_EN.md`, `assets/Logistics_Policy_MeatKombinat_EN.md` + `assets/QuestionExamples.md` (cross-chunk XREF scenarios).
 - **Messaging flow**: `DocumentUploaded` → Ingestion (extract/chunk/embed) → `ChunksGenerated` → Search indexes → `DocumentProcessingCompleted`.
 
 ## Solution Layout

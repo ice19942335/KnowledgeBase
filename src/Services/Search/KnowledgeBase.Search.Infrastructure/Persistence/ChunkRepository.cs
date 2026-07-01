@@ -106,14 +106,14 @@ public sealed class ChunkRepository : IChunkRepository
 
     public async Task<IReadOnlyList<ChunkDetailDto>> ListAsync(
         Guid tenantId,
-        Guid? documentId,
+        IReadOnlyList<Guid>? documentIds,
         CancellationToken cancellationToken)
     {
         var query = dbContext.Chunks.Where(chunk => chunk.TenantId == tenantId);
 
-        if (documentId.HasValue)
+        if (documentIds is not null)
         {
-            query = query.Where(chunk => chunk.DocumentId == documentId.Value);
+            query = query.Where(chunk => documentIds.Contains(chunk.DocumentId));
         }
 
         return await query

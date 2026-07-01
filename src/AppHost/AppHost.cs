@@ -18,8 +18,9 @@ var rabbitmq = builder.AddRabbitMQ("rabbitmq")
     .WithManagementPlugin()
     .WithLifetime(ContainerLifetime.Persistent);
 
-// Cache and tenant-context store.
+// Cache and tenant-context store (plain TCP in local dev — matches docker-compose.infra.yml).
 var redis = builder.AddRedis("redis")
+    .WithoutHttpsCertificate()
     .WithLifetime(ContainerLifetime.Persistent);
 
 // Shared blob storage location for uploaded files (Document writes, Ingestion reads).
@@ -32,7 +33,7 @@ var googleClientId = builder.Configuration["Google:ClientId"] ?? string.Empty;
 var googleClientSecret = builder.Configuration["Google:ClientSecret"] ?? string.Empty;
 
 var identityApi = builder.AddProject<Projects.KnowledgeBase_Identity_Api>("identity-api")
-    .WithReplicas(2)
+    //.WithReplicas(2)
     .WithReference(identityDb)
     .WithReference(redis)
     .WaitFor(postgres)
@@ -40,13 +41,13 @@ var identityApi = builder.AddProject<Projects.KnowledgeBase_Identity_Api>("ident
     .WithEnvironment("Google__ClientSecret", googleClientSecret);
 
 var tenantApi = builder.AddProject<Projects.KnowledgeBase_Tenant_Api>("tenant-api")
-    .WithReplicas(2)
+    //.WithReplicas(2)
     .WithReference(tenantDb)
     .WithReference(redis)
     .WaitFor(postgres);
 
 var documentApi = builder.AddProject<Projects.KnowledgeBase_Document_Api>("document-api")
-    .WithReplicas(2)
+    //.WithReplicas(2)
     .WithReference(documentDb)
     .WithReference(rabbitmq)
     .WithReference(redis)
@@ -55,14 +56,14 @@ var documentApi = builder.AddProject<Projects.KnowledgeBase_Document_Api>("docum
     .WithEnvironment("FileStorage__RootPath", blobPath);
 
 builder.AddProject<Projects.KnowledgeBase_Ingestion_Worker>("ingestion-worker")
-    .WithReplicas(2)
+    //.WithReplicas(2)
     .WithReference(rabbitmq)
     .WaitFor(rabbitmq)
     .WithEnvironment("FileStorage__RootPath", blobPath)
     .WithEnvironment("Gemini__ApiKey", geminiApiKey);
 
 var searchApi = builder.AddProject<Projects.KnowledgeBase_Search_Api>("search-api")
-    .WithReplicas(2)
+    //.WithReplicas(2)
     .WithReference(searchDb)
     .WithReference(rabbitmq)
     .WithReference(redis)
@@ -71,7 +72,7 @@ var searchApi = builder.AddProject<Projects.KnowledgeBase_Search_Api>("search-ap
     .WithEnvironment("Gemini__ApiKey", geminiApiKey);
 
 var chatApi = builder.AddProject<Projects.KnowledgeBase_Chat_Api>("chat-api")
-    .WithReplicas(2)
+    //.WithReplicas(2)
     .WithReference(chatDb)
     .WithReference(searchApi)
     .WithReference(redis)
@@ -79,7 +80,7 @@ var chatApi = builder.AddProject<Projects.KnowledgeBase_Chat_Api>("chat-api")
     .WithEnvironment("Gemini__ApiKey", geminiApiKey);
 
 var gateway = builder.AddProject<Projects.KnowledgeBase_Gateway>("gateway")
-    .WithReplicas(2)
+    //.WithReplicas(2)
     .WithReference(identityApi)
     .WithReference(tenantApi)
     .WithReference(documentApi)

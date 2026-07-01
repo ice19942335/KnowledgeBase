@@ -1,8 +1,11 @@
 import { httpClient } from "../../../shared/api/httpClient";
 import type { ChatTraceAnswer, SearchExplorerResult } from "../model/types";
 
-export async function fetchSearchExplorer(): Promise<SearchExplorerResult> {
-  const response = await httpClient.get<SearchExplorerResult>("/api/search/explorer");
+export async function fetchSearchExplorer(documentIds: string[]): Promise<SearchExplorerResult> {
+  const response = await httpClient.get<SearchExplorerResult>("/api/search/explorer", {
+    params: { documentIds },
+    paramsSerializer: { indexes: null },
+  });
   return response.data;
 }
 

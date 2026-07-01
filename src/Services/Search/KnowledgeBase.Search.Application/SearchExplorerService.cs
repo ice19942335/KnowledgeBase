@@ -13,10 +13,12 @@ public sealed class SearchExplorerService
         this.tenantContext = tenantContext;
     }
 
-    public async Task<SearchExplorerResult> GetExplorerAsync(CancellationToken cancellationToken)
+    public async Task<SearchExplorerResult> GetExplorerAsync(
+        IReadOnlyList<Guid>? documentIds,
+        CancellationToken cancellationToken)
     {
         var tenantId = tenantContext.RequireTenant();
-        var chunks = await chunkRepository.ListAsync(tenantId, documentId: null, cancellationToken);
+        var chunks = await chunkRepository.ListAsync(tenantId, documentIds, cancellationToken);
 
         var documents = chunks
             .GroupBy(chunk => chunk.DocumentId)
