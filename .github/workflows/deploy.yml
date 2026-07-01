@@ -4,10 +4,6 @@ on:
   push:
     branches: [main]
 
-concurrency:
-  group: knowledgebase-production
-  cancel-in-progress: true
-
 jobs:
   ci:
     uses: ./.github/workflows/ci.yml
@@ -16,6 +12,10 @@ jobs:
     needs: ci
     runs-on: [self-hosted, linux, knowledgebase]
     environment: prod
+    timeout-minutes: 60
+    concurrency:
+      group: knowledgebase-production-deploy
+      cancel-in-progress: false
 
     steps:
       - name: Checkout
@@ -47,18 +47,7 @@ jobs:
 
       - name: Build and deploy
         working-directory: deploy
-        run: |
-          docker compose \
-            -f docker-compose.yml \
-            -f docker-compose.traefik.yml \
-            --env-file .env \
-            down --remove-orphans
-
-          docker compose \
-            -f docker-compose.yml \
-            -f docker-compose.traefik.yml \
-            --env-file .env \
-            up -d --build --remove-orphans
+        run: bash scripts/github-deploy.sh
 
       - name: Remove generated .env
         if: always()

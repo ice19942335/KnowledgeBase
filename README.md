@@ -1404,15 +1404,20 @@ GitHub **Environment `prod`**:
 | Variables | `CORS_ALLOWED_ORIGINS` (`https://kb.bookly.lv`), `VITE_API_BASE_URL` (empty = same-origin `/api`) |
 
 Push to `main` runs tests on GitHub-hosted runners, then deploy on the
-self-hosted runner: `docker compose up -d --build`.
+self-hosted runner via `deploy/scripts/github-deploy.sh`:
 
-Manual smoke test on the server:
+1. Creates `deploy/.env` from GitHub Environment `prod` secrets (never commit `.env`).
+2. Removes orphan containers left by interrupted runs.
+3. `docker compose down` → `up -d --build` with Traefik overlay.
+4. Smoke test: `GET /api/documents` via gateway must return **200** or the job fails.
 
-```bash
-cd deploy
-docker compose --env-file .env -f docker-compose.yml ps
-curl -I http://localhost/
-```
+Deploy jobs are **queued** (`cancel-in-progress: false`) so a new push does not
+tear down a deploy that is already running.
+
+**Do not run `docker compose` manually on the server** without the same `.env`
+secrets — empty variables break Postgres health checks and the whole stack.
+
+After a green Deploy workflow, verify `https://kb.bookly.lv` in the browser.
 
 ## Not Done (remaining work)
 
