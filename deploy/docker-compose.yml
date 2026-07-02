@@ -130,7 +130,7 @@ services:
       Gemini__ChatModel: gemini-3.5-flash
       Gemini__EmbeddingModel: gemini-embedding-001
       Gemini__EmbeddingDimensions: "1536"
-      Services__search-api__http__0: http://search-api:8080
+      Chat__SearchServiceBaseUrl: ${CHAT_SEARCH_SERVICE_BASE_URL:-http://search-api:8080}
     depends_on:
       postgres:
         condition: service_healthy

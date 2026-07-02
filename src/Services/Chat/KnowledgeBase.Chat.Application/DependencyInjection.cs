@@ -12,6 +12,13 @@ public static class DependencyInjection
         services.AddOptions<RagOptions>()
             .Bind(configuration.GetSection(RagOptions.SectionName));
 
+        services.AddOptions<ChatOptions>()
+            .Bind(configuration.GetSection(ChatOptions.SectionName))
+            .Validate(
+                options => !string.IsNullOrWhiteSpace(options.SearchServiceBaseUrl),
+                "Chat:SearchServiceBaseUrl must be configured.")
+            .ValidateOnStart();
+
         services.AddScoped<ChatAppService>();
 
         return services;

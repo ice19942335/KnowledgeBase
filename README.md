@@ -1411,6 +1411,9 @@ self-hosted runner via `deploy/scripts/github-deploy.sh`:
 3. `docker compose down` → `up -d --build` with Traefik overlay.
 4. Smoke test: `GET /api/documents` via gateway must return **200** or the job fails.
 
+Chat service calls Search over HTTP inside Docker (`Chat__SearchServiceBaseUrl=http://search-api:8080`).
+Aspire local dev keeps `https+http://search-api` service discovery.
+
 Deploy jobs are **queued** (`cancel-in-progress: false`) so a new push does not
 tear down a deploy that is already running.
 

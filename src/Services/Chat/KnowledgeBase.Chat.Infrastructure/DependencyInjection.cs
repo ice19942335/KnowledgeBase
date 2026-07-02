@@ -5,6 +5,7 @@ using KnowledgeBase.Chat.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace KnowledgeBase.Chat.Infrastructure;
 
@@ -24,9 +25,14 @@ public static class DependencyInjection
 
         services.AddKnowledgeBaseAi(configuration);
 
-        services.AddHttpClient<ISearchApiClient, HttpSearchApiClient>(client =>
+        services.AddHttpClient<ISearchApiClient, HttpSearchApiClient>((serviceProvider, client) =>
         {
-            client.BaseAddress = new Uri("https+http://search-api");
+            var searchServiceBaseUrl = serviceProvider
+                .GetRequiredService<IOptions<ChatOptions>>()
+                .Value
+                .SearchServiceBaseUrl;
+
+            client.BaseAddress = new Uri(searchServiceBaseUrl);
         });
 
         return services;

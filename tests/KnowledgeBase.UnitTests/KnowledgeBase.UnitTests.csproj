@@ -24,6 +24,7 @@
     <ProjectReference Include="..\..\src\KnowledgeBase.Domain\KnowledgeBase.Domain.csproj" />
     <ProjectReference Include="..\..\src\KnowledgeBase.Infrastructure\KnowledgeBase.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Services\Ingestion\KnowledgeBase.Ingestion.Infrastructure\KnowledgeBase.Ingestion.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Services\Chat\KnowledgeBase.Chat.Application\KnowledgeBase.Chat.Application.csproj" />
     <ProjectReference Include="..\..\src\Services\Search\KnowledgeBase.Search.Application\KnowledgeBase.Search.Application.csproj" />
     <ProjectReference Include="..\..\src\BuildingBlocks\KnowledgeBase.Ai\KnowledgeBase.Ai.csproj" />
     <ProjectReference Include="..\..\src\BuildingBlocks\KnowledgeBase.SharedKernel\KnowledgeBase.SharedKernel.csproj" />
