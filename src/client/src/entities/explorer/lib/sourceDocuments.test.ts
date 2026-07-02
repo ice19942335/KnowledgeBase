@@ -43,7 +43,7 @@ describe("getOrderedUsedChunks", () => {
         documentName: "HR Policy",
         chunkIndex: 2,
         content: "Second priority chunk.",
-        indexedAtUtc: "2026-06-18T10:00:00Z",
+        indexedAt: "2026-06-18T10:00:00Z",
       },
       {
         id: "chunk-5",
@@ -51,7 +51,7 @@ describe("getOrderedUsedChunks", () => {
         documentName: "HR Policy",
         chunkIndex: 5,
         content: "First priority chunk.",
-        indexedAtUtc: "2026-06-18T10:00:00Z",
+        indexedAt: "2026-06-18T10:00:00Z",
       },
     ];
 

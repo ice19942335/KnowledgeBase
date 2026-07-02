@@ -46,7 +46,8 @@ public sealed class ChunkRepository : IChunkRepository
                 chunk.DocumentName,
                 chunk.ChunkIndex,
                 chunk.Content,
-                KeywordSearchScorer.Score(chunk.Content, query, terms)))
+                KeywordSearchScorer.Score(chunk.Content, query, terms),
+                chunk.EmbeddingTokenCount))
             .Where(result => result.Score > 0)
             .OrderByDescending(result => result.Score)
             .ThenBy(result => result.ChunkIndex)
@@ -69,7 +70,8 @@ public sealed class ChunkRepository : IChunkRepository
                 c.DocumentName,
                 c.ChunkIndex,
                 c.Content,
-                1.0 - c.Embedding.CosineDistance(queryEmbedding)))
+                1.0 - c.Embedding.CosineDistance(queryEmbedding),
+                c.EmbeddingTokenCount))
             .ToListAsync(cancellationToken);
     }
 
@@ -100,7 +102,8 @@ public sealed class ChunkRepository : IChunkRepository
                 chunk.DocumentName,
                 chunk.ChunkIndex,
                 chunk.Content,
-                0))
+                0,
+                chunk.EmbeddingTokenCount))
             .ToList();
     }
 
@@ -125,7 +128,8 @@ public sealed class ChunkRepository : IChunkRepository
                 chunk.DocumentName,
                 chunk.ChunkIndex,
                 chunk.Content,
-                chunk.IndexedAt))
+                chunk.IndexedAt,
+                chunk.EmbeddingTokenCount))
             .ToListAsync(cancellationToken);
     }
 

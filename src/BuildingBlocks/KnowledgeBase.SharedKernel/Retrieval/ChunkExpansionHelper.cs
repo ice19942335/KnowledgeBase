@@ -77,6 +77,43 @@ public static class ChunkExpansionHelper
             .ToList();
     }
 
+    public static IReadOnlyList<RankedChunkHit> FillContiguousGaps(
+        IReadOnlyList<RankedChunkHit> selected,
+        IReadOnlyList<RankedChunkHit> pool,
+        int maxTotal)
+    {
+        if (selected.Count == 0 || pool.Count == 0 || maxTotal <= 0)
+        {
+            return selected;
+        }
+
+        var poolByKey = pool.ToDictionary(hit => (hit.DocumentId, hit.ChunkIndex));
+        var merged = selected.ToDictionary(hit => (hit.DocumentId, hit.ChunkIndex));
+
+        foreach (var group in selected.GroupBy(hit => hit.DocumentId))
+        {
+            var minIndex = group.Min(hit => hit.ChunkIndex);
+            var maxIndex = group.Max(hit => hit.ChunkIndex);
+
+            for (var index = minIndex; index <= maxIndex; index++)
+            {
+                var key = (group.Key, index);
+                if (merged.ContainsKey(key) || !poolByKey.TryGetValue(key, out var pooled))
+                {
+                    continue;
+                }
+
+                merged[key] = pooled with { Score = group.Min(hit => hit.Score) * NeighborScoreFactor };
+            }
+        }
+
+        return merged.Values
+            .OrderByDescending(hit => hit.Score)
+            .ThenBy(hit => hit.ChunkIndex)
+            .Take(maxTotal)
+            .ToList();
+    }
+
     private static double FindParentScore(
         IReadOnlyDictionary<(Guid DocumentId, int ChunkIndex), double> seedScores,
         Guid documentId,

@@ -20,7 +20,7 @@ public sealed class GeminiChatCompletionService : IChatCompletionService
         chatModel = options.Value.ChatModel;
     }
 
-    public async Task<string> CompleteAsync(
+    public async Task<ChatCompletionResult> CompleteAsync(
         string systemPrompt,
         string userPrompt,
         CancellationToken cancellationToken)
@@ -46,7 +46,22 @@ public sealed class GeminiChatCompletionService : IChatCompletionService
 
         var candidate = response.Candidates?.FirstOrDefault();
         var text = candidate?.Content?.Parts?.FirstOrDefault()?.Text;
+        var usage = ReadUsage(response.UsageMetadata);
 
-        return string.IsNullOrWhiteSpace(text) ? string.Empty : text;
+        return new ChatCompletionResult(
+            string.IsNullOrWhiteSpace(text) ? string.Empty : text,
+            usage);
+    }
+
+    private static AiTokenUsage ReadUsage(GenerateContentResponseUsageMetadata? usageMetadata)
+    {
+        if (usageMetadata is null)
+        {
+            return AiTokenUsage.Empty;
+        }
+
+        return new AiTokenUsage(
+            usageMetadata.PromptTokenCount ?? 0,
+            usageMetadata.CandidatesTokenCount ?? 0);
     }
 }

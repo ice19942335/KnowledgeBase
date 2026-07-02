@@ -49,6 +49,11 @@ namespace KnowledgeBase.Search.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("vector(1536)");
 
+                    b.Property<int>("EmbeddingTokenCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
                     b.Property<DateTime>("IndexedAt")
                         .HasColumnType("timestamp with time zone");
 

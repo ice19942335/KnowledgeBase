@@ -26,6 +26,7 @@ public sealed class SearchDbContext : DbContext
             entity.Property(c => c.DocumentName).HasMaxLength(512);
             entity.Property(c => c.Content).IsRequired();
             entity.Property(c => c.Embedding).HasColumnType("vector(1536)");
+            entity.Property(c => c.EmbeddingTokenCount).HasDefaultValue(0);
 
             entity.HasIndex(c => c.Embedding)
                 .HasMethod("hnsw")

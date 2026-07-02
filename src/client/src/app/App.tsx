@@ -7,6 +7,7 @@ import { SearchPage } from "../pages/search";
 import { ChatPage } from "../pages/chat";
 import { ExplorerPage } from "../pages/explorer";
 import { DocumentViewRoute } from "../pages/document-view";
+import { DocumentDetailRoute } from "../pages/document-detail";
 import { QueryProvider } from "./providers/QueryProvider";
 import styles from "./App.module.css";
 
@@ -24,6 +25,7 @@ function AppContent() {
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/explorer" element={<ExplorerPage />} />
           <Route path="/documents/:documentId/view" element={<DocumentViewRoute />} />
+          <Route path="/documents/:documentId" element={<DocumentDetailRoute />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

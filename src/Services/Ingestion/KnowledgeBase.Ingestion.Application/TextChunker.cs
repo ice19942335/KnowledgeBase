@@ -14,6 +14,7 @@ public sealed partial class TextChunker : ITextChunker
 {
     private readonly int maxChunkSize;
     private readonly int overlapSize;
+    private readonly int maxSectionChunkSize;
 
     public TextChunker(IOptions<ChunkingOptions> options)
     {
@@ -31,8 +32,14 @@ public sealed partial class TextChunker : ITextChunker
             throw new ArgumentException("OverlapSize must be in the range [0, MaxChunkSize).", nameof(options));
         }
 
+        if (value.MaxSectionChunkSize <= 0)
+        {
+            throw new ArgumentException("MaxSectionChunkSize must be positive.", nameof(options));
+        }
+
         maxChunkSize = value.MaxChunkSize;
         overlapSize = value.OverlapSize;
+        maxSectionChunkSize = value.MaxSectionChunkSize;
     }
 
     public IReadOnlyList<TextChunk> Split(string text)
@@ -52,7 +59,7 @@ public sealed partial class TextChunker : ITextChunker
                 continue;
             }
 
-            foreach (var content in SplitSectionBody(section.Body))
+            foreach (var content in SplitSectionBody(section.Body, section.Title))
             {
                 chunks.Add(new TextChunk(content, section.Title));
             }
@@ -61,9 +68,28 @@ public sealed partial class TextChunker : ITextChunker
         return chunks;
     }
 
-    private IReadOnlyList<string> SplitSectionBody(string text)
+    private IReadOnlyList<string> SplitSectionBody(string text, string? sectionTitle)
     {
-        var normalized = WhitespaceRegex().Replace(text, " ").Trim();
+        if (sectionTitle is not null)
+        {
+            var preserved = SectionBodyNormalizer.PreserveLines(text);
+
+            if (preserved.Length <= maxSectionChunkSize)
+            {
+                return new[] { preserved };
+            }
+
+            return SplitBySize(text, collapseWhitespace: true);
+        }
+
+        return SplitBySize(text, collapseWhitespace: true);
+    }
+
+    private IReadOnlyList<string> SplitBySize(string text, bool collapseWhitespace)
+    {
+        var normalized = collapseWhitespace
+            ? WhitespaceRegex().Replace(text, " ").Trim()
+            : text.Trim();
 
         if (normalized.Length <= maxChunkSize)
         {

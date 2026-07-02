@@ -23,7 +23,7 @@ public sealed class GeminiEmbeddingGenerator : IEmbeddingGenerator
         embeddingDimensions = value.EmbeddingDimensions;
     }
 
-    public async Task<IReadOnlyList<float[]>> GenerateAsync(
+    public async Task<IReadOnlyList<EmbeddingResult>> GenerateAsync(
         IReadOnlyList<string> inputs,
         CancellationToken cancellationToken)
     {
@@ -32,11 +32,11 @@ public sealed class GeminiEmbeddingGenerator : IEmbeddingGenerator
 
         if (inputs.Count == 0)
         {
-            return Array.Empty<float[]>();
+            return Array.Empty<EmbeddingResult>();
         }
 
         var documentConfig = CreateDocumentConfig();
-        var embeddings = new List<float[]>(inputs.Count);
+        var embeddings = new List<EmbeddingResult>(inputs.Count);
 
         foreach (var input in inputs)
         {
@@ -48,13 +48,13 @@ public sealed class GeminiEmbeddingGenerator : IEmbeddingGenerator
                 documentConfig,
                 cancellationToken);
 
-            embeddings.Add(ReadEmbedding(response, "document chunk"));
+            embeddings.Add(await ReadEmbeddingAsync(response, input, "document chunk", cancellationToken));
         }
 
         return embeddings;
     }
 
-    public async Task<float[]> GenerateAsync(string input, CancellationToken cancellationToken)
+    public async Task<EmbeddingResult> GenerateAsync(string input, CancellationToken cancellationToken)
     {
         EnsureConfigured();
         var queryConfig = CreateQueryConfig();
@@ -65,7 +65,7 @@ public sealed class GeminiEmbeddingGenerator : IEmbeddingGenerator
             queryConfig,
             cancellationToken);
 
-        return ReadEmbedding(response, "search query");
+        return await ReadEmbeddingAsync(response, input, "search query", cancellationToken);
     }
 
     private EmbedContentConfig CreateDocumentConfig()
@@ -86,11 +86,37 @@ public sealed class GeminiEmbeddingGenerator : IEmbeddingGenerator
         };
     }
 
-    private float[] ReadEmbedding(EmbedContentResponse response, string purpose)
+    private async Task<EmbeddingResult> ReadEmbeddingAsync(
+        EmbedContentResponse response,
+        string input,
+        string purpose,
+        CancellationToken cancellationToken)
     {
-        var embedding = ToFloatArray(response.Embeddings?.FirstOrDefault()?.Values);
-        EnsureValidEmbedding(embedding, purpose);
-        return embedding;
+        var contentEmbedding = response.Embeddings?.FirstOrDefault();
+        var values = ToFloatArray(contentEmbedding?.Values);
+        EnsureValidEmbedding(values, purpose);
+
+        var tokenCount = await ResolveTokenCountAsync(input, contentEmbedding, cancellationToken);
+        return new EmbeddingResult(values, tokenCount);
+    }
+
+    private async Task<int> ResolveTokenCountAsync(
+        string input,
+        ContentEmbedding? embedding,
+        CancellationToken cancellationToken)
+    {
+        var statisticsTokenCount = GeminiEmbeddingTokenCounts.ReadStatisticsTokenCount(embedding);
+        if (statisticsTokenCount > 0)
+        {
+            return statisticsTokenCount;
+        }
+
+        var countResponse = await client.Models.CountTokensAsync(
+            embeddingModel,
+            input,
+            cancellationToken: cancellationToken);
+
+        return countResponse.TotalTokens ?? 0;
     }
 
     private void EnsureValidEmbedding(float[] embedding, string purpose)

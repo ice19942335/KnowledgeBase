@@ -6,4 +6,5 @@ public sealed record RankedChunkHit(
     string? FileName,
     int ChunkIndex,
     string Content,
-    double Score);
+    double Score,
+    int EmbeddingTokenCount = 0);

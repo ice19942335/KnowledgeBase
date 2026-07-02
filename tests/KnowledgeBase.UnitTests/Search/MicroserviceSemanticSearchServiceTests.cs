@@ -37,7 +37,7 @@ public sealed class MicroserviceSemanticSearchServiceTests
         aiAvailabilityState.IsConfigured.Returns(true);
 
         embeddingGenerator.GenerateAsync("annual leave", Arg.Any<CancellationToken>())
-            .Returns(new float[] { 0.1f, 0.2f, 0.3f });
+            .Returns(AiTestData.Embedding(0.1f, 8));
 
         chunkRepository.SearchVectorAsync(
                 tenantId,
@@ -46,13 +46,13 @@ public sealed class MicroserviceSemanticSearchServiceTests
                 Arg.Any<CancellationToken>())
             .Returns(new[]
             {
-                new SearchResult(Guid.NewGuid(), "Irrelevant", 0, "Unrelated content", 0.05)
+                new SearchResult(Guid.NewGuid(), "Irrelevant", 0, "Unrelated content", 0.05, 100)
             });
 
         chunkRepository.SearchKeywordAsync(tenantId, "annual leave", 20, Arg.Any<CancellationToken>())
             .Returns(new[]
             {
-                new SearchResult(Guid.NewGuid(), "HR Policy", 1, "28 calendar days of annual leave", 1.0)
+                new SearchResult(Guid.NewGuid(), "HR Policy", 1, "28 calendar days of annual leave", 1.0, 120)
             });
 
         chunkRepository.GetChunksByLocatorsAsync(
@@ -69,15 +69,20 @@ public sealed class MicroserviceSemanticSearchServiceTests
             .Returns(call =>
             {
                 var candidates = call.Arg<IReadOnlyList<RankedChunkCandidate>>();
-                return candidates.OrderByDescending(candidate => candidate.Score).Take(5).ToList();
+                return AiTestData.Rerank(
+                    candidates.OrderByDescending(candidate => candidate.Score).Take(5).ToList(),
+                    promptTokens: 40,
+                    completionTokens: 10);
             });
 
         var sut = CreateSut();
 
-        var results = await sut.SearchAsync("annual leave", CancellationToken.None);
+        var searchResult = await sut.SearchAsync("annual leave", CancellationToken.None);
 
-        var result = Assert.Single(results);
+        var result = Assert.Single(searchResult.Results);
         Assert.Equal("HR Policy", result.DocumentName);
+        Assert.Equal(8 + 50, searchResult.TokenUsage.RequestTokens);
+        Assert.Equal(120, searchResult.TokenUsage.IndexedTokens);
         await chunkRepository.Received(1).SearchKeywordAsync(
             tenantId,
             "annual leave",

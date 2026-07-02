@@ -5,7 +5,9 @@ namespace KnowledgeBase.Ai;
 /// </summary>
 public interface IEmbeddingGenerator
 {
-    Task<IReadOnlyList<float[]>> GenerateAsync(IReadOnlyList<string> inputs, CancellationToken cancellationToken);
+    Task<IReadOnlyList<EmbeddingResult>> GenerateAsync(
+        IReadOnlyList<string> inputs,
+        CancellationToken cancellationToken);
 
-    Task<float[]> GenerateAsync(string input, CancellationToken cancellationToken);
+    Task<EmbeddingResult> GenerateAsync(string input, CancellationToken cancellationToken);
 }

@@ -22,3 +22,15 @@
   color: #b91c1c;
   font-size: 0.85rem;
 }
+
+.warning {
+  flex-basis: 100%;
+  color: #92400e;
+  font-size: 0.85rem;
+}
+
+.selection {
+  flex: 1 1 100%;
+  color: #374151;
+  font-size: 0.9rem;
+}

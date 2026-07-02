@@ -5,4 +5,5 @@ public sealed record SearchResult(
     string DocumentName,
     int ChunkIndex,
     string Content,
-    double Score);
+    double Score,
+    int EmbeddingTokenCount = 0);

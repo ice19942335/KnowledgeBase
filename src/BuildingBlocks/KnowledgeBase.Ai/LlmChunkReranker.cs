@@ -10,7 +10,7 @@ public class RerankingOptions
 
     public bool RerankingEnabled { get; set; } = true;
 
-    public int RerankingCandidateLimit { get; set; } = 15;
+    public int RerankingCandidateLimit { get; set; } = 20;
 }
 
 public sealed partial class LlmChunkReranker : IChunkReranker
@@ -34,7 +34,7 @@ public sealed partial class LlmChunkReranker : IChunkReranker
         this.options = options.Value;
     }
 
-    public async Task<IReadOnlyList<RankedChunkCandidate>> RerankAsync(
+    public async Task<RerankResult> RerankAsync(
         string query,
         IReadOnlyList<RankedChunkCandidate> candidates,
         int finalTopK,
@@ -42,7 +42,7 @@ public sealed partial class LlmChunkReranker : IChunkReranker
     {
         if (!options.RerankingEnabled || !availabilityState.IsConfigured || candidates.Count == 0)
         {
-            return candidates.Take(finalTopK).ToList();
+            return new RerankResult(candidates.Take(finalTopK).ToList(), AiTokenUsage.Empty);
         }
 
         var limited = candidates.Take(options.RerankingCandidateLimit).ToList();
@@ -50,18 +50,18 @@ public sealed partial class LlmChunkReranker : IChunkReranker
 
         try
         {
-            var response = await chatCompletionService.CompleteAsync(
+            var completion = await chatCompletionService.CompleteAsync(
                 SystemPrompt,
                 userPrompt,
                 cancellationToken);
 
-            var scores = ParseScores(response, limited.Count);
+            var scores = ParseScores(completion.Text, limited.Count);
             if (scores.Count == 0)
             {
-                return limited.Take(finalTopK).ToList();
+                return new RerankResult(limited.Take(finalTopK).ToList(), completion.Usage);
             }
 
-            return limited
+            var reranked = limited
                 .Select((candidate, index) => new
                 {
                     Candidate = candidate,
@@ -72,10 +72,12 @@ public sealed partial class LlmChunkReranker : IChunkReranker
                 .Take(finalTopK)
                 .Select(entry => entry.Candidate with { Score = entry.Score / 10.0 })
                 .ToList();
+
+            return new RerankResult(reranked, completion.Usage);
         }
         catch
         {
-            return limited.Take(finalTopK).ToList();
+            return new RerankResult(limited.Take(finalTopK).ToList(), AiTokenUsage.Empty);
         }
     }
 

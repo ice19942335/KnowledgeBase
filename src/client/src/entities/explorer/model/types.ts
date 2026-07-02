@@ -13,7 +13,8 @@ export interface ChunkDetail {
   documentName: string;
   chunkIndex: number;
   content: string;
-  indexedAtUtc: string;
+  indexedAt: string;
+  embeddingTokenCount: number;
 }
 
 export interface DocumentChunksGroup {
@@ -33,10 +34,16 @@ export interface SourceReference {
   chunkIndex: number;
 }
 
+export interface TokenUsageSummary {
+  requestTokens: number;
+  indexedTokens: number;
+}
+
 export interface ChatTraceAnswer {
   conversationId: string;
   answer: string;
   sources: SourceReference[];
   steps: PipelineTraceStep[];
   totalDurationMs: number;
+  tokenUsage: TokenUsageSummary;
 }

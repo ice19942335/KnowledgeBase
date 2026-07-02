@@ -18,7 +18,8 @@ public sealed record DocumentUploaded(
 public sealed record GeneratedChunk(
     int Index,
     string Content,
-    float[] Embedding);
+    float[] Embedding,
+    int EmbeddingTokenCount);
 
 /// <summary>
 /// Published by the Ingestion worker after extraction, chunking, and embedding.

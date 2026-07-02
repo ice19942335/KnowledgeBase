@@ -1,5 +1,5 @@
 import { httpClient } from "../../../shared/api/httpClient";
-import type { DocumentDto } from "../model/types";
+import type { BatchUploadResultDto, DocumentDto } from "../model/types";
 
 export async function fetchDocuments(): Promise<DocumentDto[]> {
   const response = await httpClient.get<DocumentDto[]>("/api/documents");
@@ -44,6 +44,26 @@ export async function uploadDocument(file: File, name?: string): Promise<Documen
   return response.data;
 }
 
+export async function uploadDocumentsBatch(files: File[]): Promise<BatchUploadResultDto> {
+  const formData = new FormData();
+  for (const file of files) {
+    formData.append("files", file);
+  }
+
+  const response = await httpClient.post<BatchUploadResultDto>("/api/documents/batch", formData);
+  return response.data;
+}
+
 export async function deleteDocument(id: string): Promise<void> {
   await httpClient.delete(`/api/documents/${id}`);
+}
+
+export async function retryDocument(id: string): Promise<DocumentDto> {
+  const response = await httpClient.post<DocumentDto>(`/api/documents/${id}/retry`);
+  return response.data;
+}
+
+export async function deleteAllDocuments(): Promise<{ deletedCount: number }> {
+  const response = await httpClient.delete<{ deletedCount: number }>("/api/documents");
+  return response.data;
 }

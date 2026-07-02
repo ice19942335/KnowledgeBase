@@ -5,5 +5,8 @@ namespace KnowledgeBase.Ai;
 /// </summary>
 public interface IChatCompletionService
 {
-    Task<string> CompleteAsync(string systemPrompt, string userPrompt, CancellationToken cancellationToken);
+    Task<ChatCompletionResult> CompleteAsync(
+        string systemPrompt,
+        string userPrompt,
+        CancellationToken cancellationToken);
 }

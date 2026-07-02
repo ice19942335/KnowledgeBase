@@ -7,7 +7,9 @@ const processedDocument: DocumentDto = {
   name: "Policy",
   fileName: "policy.md",
   contentType: "text/markdown",
-  uploadedAtUtc: "2026-06-18T00:00:00.000Z",
+  createdAt: "2026-06-18T00:00:00.000Z",
+  processedAt: "2026-06-18T00:05:00.000Z",
+  error: null,
   status: "Processed",
   chunkCount: 3,
 };

@@ -1,5 +1,5 @@
 import { type FormEvent } from "react";
-import { Button, MarkdownContent, PipelineTraceTimeline } from "../../../shared/ui";
+import { Button, MarkdownContent, PipelineTraceTimeline, TokenUsageSummaryPanel } from "../../../shared/ui";
 import { DocumentSourceLinks } from "../../../entities/document/ui/DocumentSourceLinks";
 import { useDraftOrSubmitted } from "../../../shared/lib/useDraftOrSubmitted";
 import { usePipelineChat } from "../model/usePipelineChat";
@@ -43,6 +43,7 @@ export function PipelineChatDemo() {
 
       {data && (
         <div className={styles.result}>
+          <TokenUsageSummaryPanel tokenUsage={data.tokenUsage} testId="pipeline-token-usage" />
           <article className={styles.answer} data-testid="pipeline-chat-answer">
             <h3 className={styles.answerTitle}>Answer</h3>
             <MarkdownContent content={data.answer} testId="pipeline-chat-answer-markdown" />

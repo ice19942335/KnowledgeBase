@@ -1,4 +1,4 @@
 import { createSessionMutationStore } from "../../../shared/lib/createSessionMutationStore";
-import type { SearchResult } from "./types";
+import type { SearchQueryResult } from "./types";
 
-export const useSearchSessionStore = createSessionMutationStore<SearchResult[], string>();
+export const useSearchSessionStore = createSessionMutationStore<SearchQueryResult, string>();

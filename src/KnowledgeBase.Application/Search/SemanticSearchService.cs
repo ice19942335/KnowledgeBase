@@ -31,7 +31,7 @@ public sealed class SemanticSearchService : ISemanticSearchService
         var queryEmbedding = await embeddingGenerator.GenerateAsync(query, cancellationToken);
         var matches = await retrievalPipeline.RetrieveAsync(
             query,
-            queryEmbedding,
+            queryEmbedding.Values,
             topK,
             cancellationToken);
 

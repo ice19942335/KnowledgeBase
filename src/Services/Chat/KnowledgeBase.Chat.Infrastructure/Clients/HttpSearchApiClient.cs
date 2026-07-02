@@ -17,7 +17,7 @@ public sealed class HttpSearchApiClient : ISearchApiClient
         this.httpClient = httpClient;
     }
 
-    public async Task<IReadOnlyList<SearchContextChunk>> SearchAsync(
+    public async Task<SearchApiResult> SearchAsync(
         Guid tenantId,
         string query,
         CancellationToken cancellationToken)
@@ -32,8 +32,12 @@ public sealed class HttpSearchApiClient : ISearchApiClient
         var response = await httpClient.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();
 
-        var results = await response.Content.ReadFromJsonAsync<List<SearchContextChunk>>(cancellationToken);
-        return results ?? [];
+        var payload = await response.Content.ReadFromJsonAsync<SearchQueryApiResponse>(cancellationToken)
+            ?? throw new InvalidOperationException("Search response was empty.");
+
+        return new SearchApiResult(
+            MapResults(payload.Results),
+            payload.TokenUsage);
     }
 
     public async Task<SearchTraceResponse> SearchWithTraceAsync(
@@ -54,21 +58,43 @@ public sealed class HttpSearchApiClient : ISearchApiClient
         var trace = await response.Content.ReadFromJsonAsync<SearchTraceApiResponse>(cancellationToken)
             ?? throw new InvalidOperationException("Search trace response was empty.");
 
-        var results = trace.Results
+        return new SearchTraceResponse(
+            trace.Query,
+            MapResults(trace.Results),
+            trace.Steps,
+            trace.TotalDurationMs,
+            trace.TokenUsage);
+    }
+
+    private static IReadOnlyList<SearchContextChunk> MapResults(IReadOnlyList<SearchResultApiModel> results)
+    {
+        return results
             .Select(result => new SearchContextChunk(
                 result.DocumentId,
                 result.DocumentName,
                 result.ChunkIndex,
                 result.Content,
-                result.Score))
+                result.Score,
+                result.EmbeddingTokenCount))
             .ToList();
-
-        return new SearchTraceResponse(trace.Query, results, trace.Steps, trace.TotalDurationMs);
     }
+
+    private sealed record SearchQueryApiResponse(
+        IReadOnlyList<SearchResultApiModel> Results,
+        SharedKernel.Diagnostics.TokenUsageSummary TokenUsage);
 
     private sealed record SearchTraceApiResponse(
         string Query,
-        IReadOnlyList<SearchContextChunk> Results,
+        IReadOnlyList<SearchResultApiModel> Results,
         IReadOnlyList<SharedKernel.Diagnostics.PipelineTraceStep> Steps,
-        long TotalDurationMs);
+        long TotalDurationMs,
+        SharedKernel.Diagnostics.TokenUsageSummary TokenUsage);
+
+    private sealed record SearchResultApiModel(
+        Guid DocumentId,
+        string DocumentName,
+        int ChunkIndex,
+        string Content,
+        double Score,
+        int EmbeddingTokenCount);
 }

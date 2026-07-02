@@ -81,7 +81,11 @@ public sealed class IngestionService
         var generated = new List<GeneratedChunk>(chunks.Count);
         for (var index = 0; index < chunks.Count; index++)
         {
-            generated.Add(new GeneratedChunk(index, chunks[index].Content, embeddings[index]));
+            generated.Add(new GeneratedChunk(
+                index,
+                chunks[index].Content,
+                embeddings[index].Values,
+                embeddings[index].TokenCount));
         }
 
         return generated;

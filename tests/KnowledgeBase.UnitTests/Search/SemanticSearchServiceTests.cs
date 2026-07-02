@@ -14,6 +14,16 @@ public sealed class SemanticSearchServiceTests
     private readonly IChunkSearchRepository searchRepository = Substitute.For<IChunkSearchRepository>();
     private readonly IChunkReranker chunkReranker = Substitute.For<IChunkReranker>();
 
+    public SemanticSearchServiceTests()
+    {
+        chunkReranker.RerankAsync(
+                Arg.Any<string>(),
+                Arg.Any<IReadOnlyList<RankedChunkCandidate>>(),
+                Arg.Any<int>(),
+                Arg.Any<CancellationToken>())
+            .Returns(call => AiTestData.Rerank(call.Arg<IReadOnlyList<RankedChunkCandidate>>().ToList()));
+    }
+
     private SemanticSearchService CreateSut(SearchOptions? options = null)
     {
         var retrievalPipeline = new ChunkRetrievalPipeline(
@@ -46,7 +56,7 @@ public sealed class SemanticSearchServiceTests
     public async Task SearchAsync_WhenTopKMissing_UsesDefaultFinalTopK()
     {
         embeddingGenerator.GenerateAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(new[] { 0.1f });
+            .Returns(AiTestData.Embedding());
         searchRepository.SearchVectorAsync(Arg.Any<float[]>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<ChunkMatch>());
         searchRepository.SearchKeywordAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
@@ -75,7 +85,7 @@ public sealed class SemanticSearchServiceTests
     public async Task SearchAsync_WhenTopKExceedsMax_IsClamped()
     {
         embeddingGenerator.GenerateAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(new[] { 0.1f });
+            .Returns(AiTestData.Embedding());
         searchRepository.SearchVectorAsync(Arg.Any<float[]>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<ChunkMatch>());
         searchRepository.SearchKeywordAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
@@ -104,7 +114,7 @@ public sealed class SemanticSearchServiceTests
     public async Task SearchAsync_MapsMatchesToDtos()
     {
         embeddingGenerator.GenerateAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(new[] { 0.1f });
+            .Returns(AiTestData.Embedding());
 
         var documentId = Guid.NewGuid();
         searchRepository.SearchVectorAsync(Arg.Any<float[]>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
@@ -120,7 +130,7 @@ public sealed class SemanticSearchServiceTests
             .Returns(call =>
             {
                 var candidates = call.Arg<IReadOnlyList<RankedChunkCandidate>>();
-                return candidates.Select(candidate => candidate with { Score = 0.92 }).ToList();
+                return AiTestData.Rerank(candidates.Select(candidate => candidate with { Score = 0.92 }).ToList());
             });
 
         var sut = CreateSut();

@@ -5,7 +5,7 @@ namespace KnowledgeBase.Chat.Application;
 /// </summary>
 public interface ISearchApiClient
 {
-    Task<IReadOnlyList<SearchContextChunk>> SearchAsync(
+    Task<SearchApiResult> SearchAsync(
         Guid tenantId,
         string query,
         CancellationToken cancellationToken);
@@ -16,9 +16,14 @@ public interface ISearchApiClient
         CancellationToken cancellationToken);
 }
 
+public sealed record SearchApiResult(
+    IReadOnlyList<SearchContextChunk> Results,
+    SharedKernel.Diagnostics.TokenUsageSummary TokenUsage);
+
 public sealed record SearchContextChunk(
     Guid DocumentId,
     string DocumentName,
     int ChunkIndex,
     string Content,
-    double Score);
+    double Score,
+    int EmbeddingTokenCount = 0);

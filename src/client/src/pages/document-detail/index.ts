@@ -1,0 +1,1 @@
+export { DocumentDetailRoute } from "./DocumentDetailRoute";

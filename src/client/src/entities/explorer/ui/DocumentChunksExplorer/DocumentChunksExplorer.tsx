@@ -14,6 +14,15 @@ interface DocumentChunksExplorerProps {
   emptyState?: ExplorerEmptyState;
 }
 
+function formatIndexedAt(value: string | undefined): string {
+  if (!value) {
+    return "—";
+  }
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString();
+}
+
 function getEmptyMessage(emptyState: ExplorerEmptyState): string {
   switch (emptyState) {
     case "awaiting-request":
@@ -47,7 +56,14 @@ function ChunkItem({
           )}
           Chunk #{chunk.chunkIndex}
         </span>
-        <span>{new Date(chunk.indexedAtUtc).toLocaleString()}</span>
+        <span>
+          {chunk.embeddingTokenCount > 0 && (
+            <span className={styles.tokenBadge} data-testid={`chunk-tokens-${chunk.id}`}>
+              {chunk.embeddingTokenCount} tokens
+            </span>
+          )}
+          <span data-testid={`chunk-indexed-at-${chunk.id}`}>{formatIndexedAt(chunk.indexedAt)}</span>
+        </span>
       </div>
       <pre className={styles.chunkContent}>{chunk.content}</pre>
     </li>

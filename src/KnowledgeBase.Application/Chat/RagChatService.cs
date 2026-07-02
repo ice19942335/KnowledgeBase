@@ -35,7 +35,7 @@ public sealed class RagChatService : IRagChatService
         var questionEmbedding = await embeddingGenerator.GenerateAsync(question, cancellationToken);
         var matches = await retrievalPipeline.RetrieveAsync(
             question,
-            questionEmbedding,
+            questionEmbedding.Values,
             options.ContextChunkCount,
             cancellationToken);
 
@@ -45,7 +45,7 @@ public sealed class RagChatService : IRagChatService
         }
 
         var userPrompt = RagPromptBuilder.BuildUserPrompt(question, matches);
-        var answer = await chatCompletionService.CompleteAsync(
+        var completion = await chatCompletionService.CompleteAsync(
             RagPromptBuilder.SystemPrompt,
             userPrompt,
             cancellationToken);
@@ -56,6 +56,6 @@ public sealed class RagChatService : IRagChatService
             .Select(match => new SourceReferenceDto(match.DocumentId, match.DocumentName, match.FileName))
             .ToList();
 
-        return new ChatAnswerDto(answer, sources);
+        return new ChatAnswerDto(completion.Text, sources);
     }
 }

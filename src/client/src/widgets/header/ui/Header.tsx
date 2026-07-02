@@ -4,7 +4,7 @@ import styles from "./Header.module.css";
 const links = [
   {
     to: "/",
-    label: "Documents",
+    label: "Knowledge Base",
     end: true,
     title: "Upload files and trigger async ingestion (extract → chunk → embed → index)",
   },

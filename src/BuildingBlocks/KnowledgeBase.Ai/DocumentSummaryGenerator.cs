@@ -58,14 +58,14 @@ public sealed class DocumentSummaryGenerator : IDocumentSummaryGenerator
             $"Write a summary in at most {options.MaxSummaryWords} words.\n\n" +
             $"Text:\n{input}";
 
-        var summary = await chatCompletionService.CompleteAsync(
+        var completion = await chatCompletionService.CompleteAsync(
             SystemPrompt,
             userPrompt,
             cancellationToken);
 
-        return string.IsNullOrWhiteSpace(summary)
+        return string.IsNullOrWhiteSpace(completion.Text)
             ? TruncateForSummary(normalizedText)
-            : summary.Trim();
+            : completion.Text.Trim();
     }
 
     private string TruncateForSummary(string text)

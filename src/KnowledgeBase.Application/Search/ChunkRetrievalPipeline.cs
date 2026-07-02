@@ -70,22 +70,41 @@ public sealed class ChunkRetrievalPipeline
 
         var expandedResults = await ExpandNeighborsAsync(fusedResults, cancellationToken);
 
-        var reranked = await chunkReranker.RerankAsync(
+        var rerankCandidates = expandedResults
+            .Take(options.RerankingCandidateLimit)
+            .Select(hit => new RankedChunkCandidate(
+                hit.DocumentId,
+                hit.DocumentName,
+                hit.FileName,
+                hit.ChunkIndex,
+                hit.Content,
+                hit.Score))
+            .ToList();
+
+        var rerankResult = await chunkReranker.RerankAsync(
             query,
-            expandedResults
-                .Take(options.RerankingCandidateLimit)
-                .Select(hit => new RankedChunkCandidate(
-                    hit.DocumentId,
-                    hit.DocumentName,
-                    hit.FileName,
-                    hit.ChunkIndex,
-                    hit.Content,
-                    hit.Score))
-                .ToList(),
+            rerankCandidates,
             finalTopK,
             cancellationToken);
 
-        return reranked
+        var rerankedHits = rerankResult.Candidates
+            .Select(candidate => new RankedChunkHit(
+                candidate.DocumentId,
+                candidate.DocumentName,
+                candidate.FileName,
+                candidate.ChunkIndex,
+                candidate.Content,
+                candidate.Score))
+            .ToList();
+
+        var finalHits = options.ContiguousGapFillEnabled
+            ? ChunkExpansionHelper.FillContiguousGaps(
+                rerankedHits,
+                expandedResults,
+                finalTopK + options.ContiguousGapFillMaxExtra)
+            : rerankedHits;
+
+        return finalHits
             .Select(candidate => new ChunkMatch(
                 candidate.DocumentId,
                 candidate.DocumentName,

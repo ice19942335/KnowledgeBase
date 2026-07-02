@@ -86,9 +86,11 @@ HR_Policy.pdf
 * Feature-Sliced Design
 * Zustand (state management)
 * TanStack Query (server state)
-* Pages: Documents, Search, Chat, **Explorer** (`/explorer`) — each page includes
+* Pages: Knowledge Base, Search, Chat, **Explorer** (`/explorer`) — each page includes
   a short summary and an expandable **How it works under the hood** guide:
-  * **Documents** — upload/list/delete; triggers async ingestion
+  * **Knowledge Base** — upload/list/delete (including delete all); click a document
+    name to open **document details** (`/documents/{id}`) with indexed chunks and
+    per-chunk embedding token counts; triggers async ingestion
     (extract → chunk → contextual embed → pgvector index via RabbitMQ).
   * **Search** — hybrid vector + keyword retrieval, RRF merge, neighbor expansion,
     LLM rerank; returns ranked passages (not a generated answer).
@@ -766,6 +768,7 @@ POST /documents
 GET /documents
 GET /documents/{id}
 DELETE /documents/{id}
+POST /documents/{id}/retry
 ```
 
 Frontend:
@@ -1269,10 +1272,13 @@ DELETE /api/tenants/{id}/members/{userId}
 
 # Documents (requires X-Tenant-Id header)
 POST   /api/documents               # multipart upload (file, optional name)
+POST   /api/documents/batch         # multipart batch upload (files[])
 GET    /api/documents
 GET    /api/documents/{id}
 GET    /api/documents/{id}/content   # inline preview; ?download=true to download
+DELETE /api/documents               # delete all documents for the tenant
 DELETE /api/documents/{id}
+POST   /api/documents/{id}/retry    # re-run ingestion for a failed document
 
 # Search (requires X-Tenant-Id header)
 POST   /api/search                  # { "query": "..." }
@@ -1333,8 +1339,9 @@ Mapped against the full roadmap above.
   Document service.
 * **Phase 3 — Text Extraction**: PDF (PdfPig) and plain-text extractors in the
   Ingestion worker.
-* **Phase 4 — Chunking**: section-aware, word-overlapping chunker (`HeadingParser` +
-  `TextChunker`) with full unit coverage.
+* **Phase 4 — Chunking**: section-aware chunker (`HeadingParser` + `TextChunker`).
+  Entire markdown sections up to `MaxSectionChunkSize` (default 8000) stay in one chunk;
+  larger sections fall back to word-overlapping splits (`MaxChunkSize` / `OverlapSize`).
 * **Phase 5 — Embeddings**: contextual embeddings at index time (document summary +
   section title + metadata wrapped for `RETRIEVAL_DOCUMENT`; raw chunk text stored
   for RAG). Gemini vectors in `vector(1536)` columns. Re-upload documents after
@@ -1343,7 +1350,12 @@ Mapped against the full roadmap above.
   fusion, neighbor chunk expansion (`NeighborExpansionRadius`), LLM reranking
   (`RerankingEnabled`). Config: `RetrievalTopK`, `FinalTopK`, `HybridSearchEnabled`.
   Explorer trace shows `search.vector`, `search.keyword`, `search.hybrid_merge`,
-  `search.expand_neighbors`, `search.rerank`.
+  `search.expand_neighbors`, `search.rerank`. Each indexed chunk stores
+  `EmbeddingTokenCount` (one-time Gemini tokens at ingest via `CountTokens` when
+  the embed response omits enterprise-only statistics). Search and chat
+  responses include `tokenUsage`: `requestTokens` (query embed, rerank, LLM) and
+  `indexedTokens` (sum of retrieved chunks' stored embedding tokens). Re-upload
+  documents after upgrading token accounting so stored counts are populated.
 * **RAG test documents**: `assets/HR_Policy_MeatKombinat_EN.md` (XREF-01..06) and
   `assets/Logistics_Policy_MeatKombinat_EN.md` (XREF-LOG-01..08) with cross-chunk
   references for contextual-embedding validation. See `assets/QuestionExamples.md`.
@@ -1358,13 +1370,16 @@ Mapped against the full roadmap above.
   service, `X-Tenant-Id` header middleware (single source of truth), scoped
   `ITenantContext`.
 * **Swagger** on every API service with `X-Tenant-Id` header and JWT Bearer.
-* **Frontend**: Documents, Search, Chat, and **Explorer** (`/explorer`) pages
+* **Frontend**: Knowledge Base, Search, Chat, and **Explorer** (`/explorer`) pages
   (React + TS, Feature-Sliced Design, TanStack Query). Each page shows what the
   tab does for the user and an expandable pipeline guide (`PageGuide` component).
-  * **Documents** — `POST /api/documents` → `DocumentUploaded` → Ingestion Worker
-    (extract, chunk, Gemini embeddings) → Search indexes chunks in pgvector.
+  * **Knowledge Base** — `POST /api/documents` → `DocumentUploaded` → Ingestion Worker
+    (extract, chunk, Gemini embeddings) → Search indexes chunks in pgvector;
+    document details page loads `GET /api/documents/{id}` plus
+    `GET /api/search/explorer?documentIds=` for chunks and indexing token totals.
   * **Search** — `POST /api/search` — embed query, hybrid pgvector + keyword,
-    RRF, neighbor expansion, LLM rerank; returns scored excerpts.
+    RRF, neighbor expansion, LLM rerank; returns scored excerpts plus
+    `tokenUsage` (`requestTokens` + `indexedTokens`).
   * **Chat** — `POST /api/chat` — calls Search for context, builds RAG prompt,
     Gemini completion, source links, persists `Conversation` / `ChatMessage`.
   * **Explorer** — `POST /api/chat/trace` first, then `GET /api/search/explorer`
@@ -1373,9 +1388,10 @@ Mapped against the full roadmap above.
     and per-document chunk tabs when multiple sources are used; each document
     panel has **All chunks** / **Used for answer** sub-tabs (latter sorted by
     RAG priority).
-* **Tests**: 44 backend unit tests (chunker, contextual embeddings, hybrid search,
-  keyword search) and 14 frontend tests (Button, DocumentList, documentPolling,
-  PageGuide, PipelineTraceTimeline, DocumentChunksExplorer).
+* **Tests**: 53 backend unit tests (chunker, contextual embeddings, hybrid search,
+  keyword search, token usage) and 39 frontend tests (Button, DocumentList, documentPolling,
+  DocumentDetailPage, DocumentIndexingTokens, indexingTokens,
+  PageGuide, PipelineTraceTimeline, DocumentChunksExplorer, TokenUsageSummary).
 * **EF migrations** for all 5 databases, each with `.Designer.cs`.
 * `Directory.Build.props` with `TreatWarningsAsErrors` (NU19xx audit warnings
   excluded for transitive Aspire dependencies).

@@ -18,13 +18,16 @@ public sealed class ChunkIndexingService
 
     public async Task IndexAsync(ChunksGenerated message, CancellationToken cancellationToken)
     {
+        await chunkRepository.RemoveByDocumentAsync(message.TenantId, message.DocumentId, cancellationToken);
+
         var entities = message.Chunks.Select(chunk => new SearchableChunk(
             message.DocumentId,
             message.TenantId,
             message.DocumentName,
             chunk.Index,
             chunk.Content,
-            new Vector(chunk.Embedding))).ToList();
+            new Vector(chunk.Embedding),
+            chunk.EmbeddingTokenCount)).ToList();
 
         await chunkRepository.AddRangeAsync(entities, cancellationToken);
         await chunkRepository.SaveChangesAsync(cancellationToken);

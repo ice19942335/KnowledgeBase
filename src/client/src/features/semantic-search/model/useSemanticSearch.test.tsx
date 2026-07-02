@@ -6,15 +6,22 @@ import { useSearchSessionStore } from "./searchSessionStore";
 import { useSemanticSearch } from "./useSemanticSearch";
 
 vi.mock("../api/searchApi", () => ({
-  searchChunks: vi.fn(async (query: string) => [
-    {
-      documentId: "11111111-1111-1111-1111-111111111111",
-      documentName: "HR Policy",
-      chunkIndex: 0,
-      content: `Result for ${query}`,
-      score: 0.91,
+  searchChunks: vi.fn(async (query: string) => ({
+    results: [
+      {
+        documentId: "11111111-1111-1111-1111-111111111111",
+        documentName: "HR Policy",
+        chunkIndex: 0,
+        content: `Result for ${query}`,
+        score: 0.91,
+        embeddingTokenCount: 25,
+      },
+    ],
+    tokenUsage: {
+      requestTokens: 40,
+      indexedTokens: 25,
     },
-  ]),
+  })),
 }));
 
 function createQueryWrapper(queryClient: QueryClient) {
@@ -42,12 +49,12 @@ describe("useSemanticSearch", () => {
 
     first.result.current.mutate("probation period");
     await waitFor(() => expect(first.result.current.isSuccess).toBe(true));
-    expect(first.result.current.data?.[0]?.content).toContain("probation period");
+    expect(first.result.current.data?.results[0]?.content).toContain("probation period");
 
     first.unmount();
 
     const second = renderHook(() => useSemanticSearch(), { wrapper });
-    expect(second.result.current.data?.[0]?.content).toContain("probation period");
+    expect(second.result.current.data?.results[0]?.content).toContain("probation period");
     expect(second.result.current.variables).toBe("probation period");
   });
 });

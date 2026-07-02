@@ -6,7 +6,8 @@ public sealed record ChunkDetailDto(
     string DocumentName,
     int ChunkIndex,
     string Content,
-    DateTime IndexedAt);
+    DateTime IndexedAt,
+    int EmbeddingTokenCount);
 
 public sealed record DocumentChunksGroupDto(
     Guid DocumentId,
@@ -17,8 +18,13 @@ public sealed record SearchExplorerResult(
     IReadOnlyList<DocumentChunksGroupDto> Documents,
     int TotalChunks);
 
+public sealed record SearchQueryResult(
+    IReadOnlyList<SearchResult> Results,
+    SharedKernel.Diagnostics.TokenUsageSummary TokenUsage);
+
 public sealed record SearchTraceResult(
     string Query,
     IReadOnlyList<SearchResult> Results,
     IReadOnlyList<SharedKernel.Diagnostics.PipelineTraceStep> Steps,
-    long TotalDurationMs);
+    long TotalDurationMs,
+    SharedKernel.Diagnostics.TokenUsageSummary TokenUsage);

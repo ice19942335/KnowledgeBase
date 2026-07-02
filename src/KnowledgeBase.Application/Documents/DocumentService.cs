@@ -135,7 +135,7 @@ public sealed class DocumentService : IDocumentService
         for (var index = 0; index < chunkParts.Count; index++)
         {
             var chunk = new DocumentChunk(document.Id, index, chunkParts[index].Content);
-            chunk.SetEmbedding(embeddings[index]);
+            chunk.SetEmbedding(embeddings[index].Values);
             chunks.Add(chunk);
         }
 

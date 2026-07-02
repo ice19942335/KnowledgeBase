@@ -18,7 +18,8 @@ public sealed class SearchableChunk
         string documentName,
         int chunkIndex,
         string content,
-        Vector embedding)
+        Vector embedding,
+        int embeddingTokenCount)
     {
         Id = Guid.NewGuid();
         DocumentId = documentId;
@@ -27,6 +28,7 @@ public sealed class SearchableChunk
         ChunkIndex = chunkIndex;
         Content = content;
         Embedding = embedding;
+        EmbeddingTokenCount = embeddingTokenCount;
         IndexedAt = DateTime.UtcNow;
     }
 
@@ -43,6 +45,8 @@ public sealed class SearchableChunk
     public string Content { get; private set; } = string.Empty;
 
     public Vector Embedding { get; private set; } = null!;
+
+    public int EmbeddingTokenCount { get; private set; }
 
     public DateTime IndexedAt { get; private set; }
 }

@@ -33,12 +33,16 @@ public sealed class SemanticSearchService
         this.options = options.Value;
     }
 
-    public async Task<IReadOnlyList<SearchResult>> SearchAsync(
+    public async Task<SearchQueryResult> SearchAsync(
         string query,
         CancellationToken cancellationToken)
     {
         var tenantId = tenantContext.RequireTenant();
-        return await SearchInternalAsync(tenantId, query, includeTrace: false, cancellationToken);
+        var execution = await SearchInternalAsync(tenantId, query, includeTrace: false, cancellationToken);
+
+        return new SearchQueryResult(
+            execution.Results,
+            CreateTokenUsageSummary(execution.RequestTokens, execution.Results));
     }
 
     public Task<SearchTraceResult> SearchWithTraceAsync(
@@ -56,7 +60,7 @@ public sealed class SemanticSearchService
         var steps = new List<PipelineTraceStep>();
         var totalStopwatch = Stopwatch.StartNew();
 
-        var results = await SearchInternalAsync(
+        var execution = await SearchInternalAsync(
             tenantId,
             query,
             includeTrace: true,
@@ -64,10 +68,16 @@ public sealed class SemanticSearchService
             steps);
 
         totalStopwatch.Stop();
-        return new SearchTraceResult(query, results, steps, totalStopwatch.ElapsedMilliseconds);
+
+        return new SearchTraceResult(
+            query,
+            execution.Results,
+            steps,
+            totalStopwatch.ElapsedMilliseconds,
+            CreateTokenUsageSummary(execution.RequestTokens, execution.Results));
     }
 
-    private async Task<IReadOnlyList<SearchResult>> SearchInternalAsync(
+    private async Task<SearchExecutionResult> SearchInternalAsync(
         Guid tenantId,
         string query,
         bool includeTrace,
@@ -80,8 +90,9 @@ public sealed class SemanticSearchService
         }
 
         var embedStopwatch = Stopwatch.StartNew();
-        var embedding = await embeddingGenerator.GenerateAsync(query, cancellationToken);
+        var embeddingResult = await embeddingGenerator.GenerateAsync(query, cancellationToken);
         embedStopwatch.Stop();
+        var requestTokens = embeddingResult.TokenCount;
 
         if (includeTrace && steps is not null)
         {
@@ -93,12 +104,13 @@ public sealed class SemanticSearchService
                 Input: new { Query = query },
                 Output: new
                 {
-                    Dimensions = embedding.Length,
-                    VectorPreview = embedding.Take(8).Select(value => Math.Round(value, 6)).ToArray()
+                    Dimensions = embeddingResult.Values.Length,
+                    TokenCount = embeddingResult.TokenCount,
+                    VectorPreview = embeddingResult.Values.Take(8).Select(value => Math.Round(value, 6)).ToArray()
                 }));
         }
 
-        var vector = new Vector(embedding);
+        var vector = new Vector(embeddingResult.Values);
         var retrievalTopK = options.RetrievalTopK;
         var finalTopK = options.FinalTopK;
 
@@ -148,6 +160,7 @@ public sealed class SemanticSearchService
                         result.DocumentName,
                         result.ChunkIndex,
                         Score = Math.Round(result.Score, 4),
+                        result.EmbeddingTokenCount,
                         ContentPreview = Truncate(result.Content, 160)
                     }).ToList()
                 }));
@@ -171,6 +184,7 @@ public sealed class SemanticSearchService
                         result.DocumentName,
                         result.ChunkIndex,
                         Score = Math.Round(result.Score, 4),
+                        result.EmbeddingTokenCount,
                         ContentPreview = Truncate(result.Content, 160)
                     }).ToList()));
             }
@@ -204,6 +218,7 @@ public sealed class SemanticSearchService
                     result.DocumentName,
                     result.ChunkIndex,
                     Score = Math.Round(result.Score, 4),
+                    result.EmbeddingTokenCount,
                     ContentPreview = Truncate(result.Content, 160)
                 }).ToList()));
         }
@@ -226,26 +241,49 @@ public sealed class SemanticSearchService
                     result.DocumentName,
                     result.ChunkIndex,
                     Score = Math.Round(result.Score, 4),
+                    result.EmbeddingTokenCount,
                     ContentPreview = Truncate(result.Content, 160)
                 }).ToList()));
         }
 
         var rerankStopwatch = Stopwatch.StartNew();
-        var reranked = await chunkReranker.RerankAsync(
+        var rerankCandidates = expandedResults
+            .Take(options.RerankingCandidateLimit)
+            .Select(hit => new RankedChunkCandidate(
+                hit.DocumentId,
+                hit.DocumentName,
+                hit.FileName,
+                hit.ChunkIndex,
+                hit.Content,
+                hit.Score,
+                hit.EmbeddingTokenCount))
+            .ToList();
+
+        var rerankResult = await chunkReranker.RerankAsync(
             query,
-            expandedResults
-                .Take(options.RerankingCandidateLimit)
-                .Select(hit => new RankedChunkCandidate(
-                    hit.DocumentId,
-                    hit.DocumentName,
-                    hit.FileName,
-                    hit.ChunkIndex,
-                    hit.Content,
-                    hit.Score))
-                .ToList(),
+            rerankCandidates,
             finalTopK,
             cancellationToken);
         rerankStopwatch.Stop();
+        requestTokens += rerankResult.TokenUsage.TotalTokens;
+
+        var rerankedHits = rerankResult.Candidates
+            .Select(candidate => new RankedChunkHit(
+                candidate.DocumentId,
+                candidate.DocumentName,
+                candidate.FileName,
+                candidate.ChunkIndex,
+                candidate.Content,
+                candidate.Score,
+                candidate.EmbeddingTokenCount))
+            .ToList();
+
+        var finalHits = options.ContiguousGapFillEnabled
+            ? ChunkExpansionHelper.FillContiguousGaps(
+                rerankedHits,
+                expandedResults,
+                finalTopK + options.ContiguousGapFillMaxExtra)
+            : rerankedHits;
 
         if (includeTrace && steps is not null)
         {
@@ -258,26 +296,36 @@ public sealed class SemanticSearchService
                 {
                     options.RerankingEnabled,
                     options.RerankingCandidateLimit,
-                    FinalTopK = finalTopK
+                    FinalTopK = finalTopK,
+                    options.ContiguousGapFillEnabled,
+                    options.ContiguousGapFillMaxExtra
                 },
-                Output: reranked.Select(result => new
+                Output: new
                 {
-                    result.DocumentId,
-                    result.DocumentName,
-                    result.ChunkIndex,
-                    Score = Math.Round(result.Score, 4),
-                    ContentPreview = Truncate(result.Content, 160)
-                }).ToList()));
+                    TokenUsage = rerankResult.TokenUsage,
+                    Results = finalHits.Select(result => new
+                    {
+                        result.DocumentId,
+                        result.DocumentName,
+                        result.ChunkIndex,
+                        Score = Math.Round(result.Score, 4),
+                        result.EmbeddingTokenCount,
+                        ContentPreview = Truncate(result.Content, 160)
+                    }).ToList()
+                }));
         }
 
-        return reranked
+        var results = finalHits
             .Select(candidate => new SearchResult(
                 candidate.DocumentId,
                 candidate.DocumentName,
                 candidate.ChunkIndex,
                 candidate.Content,
-                candidate.Score))
+                candidate.Score,
+                candidate.EmbeddingTokenCount))
             .ToList();
+
+        return new SearchExecutionResult(results, requestTokens);
     }
 
     private async Task<IReadOnlyList<RankedChunkHit>> ExpandNeighborsAsync(
@@ -328,8 +376,23 @@ public sealed class SemanticSearchService
                 null,
                 result.ChunkIndex,
                 result.Content,
-                result.Score))
+                result.Score,
+                result.EmbeddingTokenCount))
             .ToList();
+    }
+
+    private static TokenUsageSummary CreateTokenUsageSummary(
+        int requestTokens,
+        IReadOnlyList<SearchResult> results)
+    {
+        return new TokenUsageSummary(requestTokens, SumIndexedTokens(results));
+    }
+
+    private static int SumIndexedTokens(IReadOnlyList<SearchResult> results)
+    {
+        return results
+            .DistinctBy(result => (result.DocumentId, result.ChunkIndex))
+            .Sum(result => result.EmbeddingTokenCount);
     }
 
     private static string Truncate(string value, int maxLength)
@@ -341,4 +404,8 @@ public sealed class SemanticSearchService
 
         return value[..maxLength] + "...";
     }
+
+    private sealed record SearchExecutionResult(
+        IReadOnlyList<SearchResult> Results,
+        int RequestTokens);
 }

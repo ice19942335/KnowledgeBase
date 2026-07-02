@@ -23,8 +23,8 @@ public sealed class SearchController : ControllerBase
     }
 
     [HttpPost]
-    [ProducesResponseType(typeof(IReadOnlyList<SearchResult>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyList<SearchResult>>> Search(
+    [ProducesResponseType(typeof(SearchQueryResult), StatusCodes.Status200OK)]
+    public async Task<ActionResult<SearchQueryResult>> Search(
         [FromBody] SearchRequest request,
         CancellationToken cancellationToken)
     {
@@ -33,8 +33,8 @@ public sealed class SearchController : ControllerBase
             return BadRequest("Query cannot be empty.");
         }
 
-        var results = await searchService.SearchAsync(request.Query, cancellationToken);
-        return Ok(results);
+        var result = await searchService.SearchAsync(request.Query, cancellationToken);
+        return Ok(result);
     }
 
     [HttpGet("explorer")]

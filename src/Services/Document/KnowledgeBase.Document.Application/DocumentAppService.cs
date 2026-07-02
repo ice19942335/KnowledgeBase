@@ -57,6 +57,40 @@ public sealed class DocumentAppService
         return DocumentDto.From(document);
     }
 
+    public async Task<BatchUploadResultDto> UploadBatchAsync(
+        IReadOnlyList<UploadFileRequest> files,
+        CancellationToken cancellationToken)
+    {
+        var results = new List<BatchUploadItemResult>(files.Count);
+
+        foreach (var file in files)
+        {
+            if (file.ContentLength == 0)
+            {
+                results.Add(new BatchUploadItemResult(file.FileName, null, "A non-empty file is required."));
+                continue;
+            }
+
+            try
+            {
+                var document = await UploadAsync(
+                    file.Content,
+                    file.Name,
+                    file.FileName,
+                    file.ContentType,
+                    cancellationToken);
+
+                results.Add(new BatchUploadItemResult(file.FileName, document, null));
+            }
+            catch (Exception ex)
+            {
+                results.Add(new BatchUploadItemResult(file.FileName, null, ex.Message));
+            }
+        }
+
+        return new BatchUploadResultDto(results);
+    }
+
     public async Task<IReadOnlyList<DocumentDto>> ListAsync(CancellationToken cancellationToken)
     {
         var tenantId = tenantContext.RequireTenant();
@@ -96,15 +130,44 @@ public sealed class DocumentAppService
             return false;
         }
 
-        await repository.RemoveAsync(document, cancellationToken);
-        await repository.SaveChangesAsync(cancellationToken);
-        await fileStorage.DeleteAsync(document.StoragePath, cancellationToken);
-
-        await eventPublisher.PublishAsync(
-            new DocumentDeleted(document.Id, tenantId),
-            cancellationToken);
-
+        await DeleteDocumentsAsync(tenantId, [document], cancellationToken);
         return true;
+    }
+
+    public async Task<DeleteAllResultDto> DeleteAllAsync(CancellationToken cancellationToken)
+    {
+        var tenantId = tenantContext.RequireTenant();
+        var documents = await repository.ListAsync(tenantId, cancellationToken);
+
+        if (documents.Count == 0)
+        {
+            return new DeleteAllResultDto(0);
+        }
+
+        await DeleteDocumentsAsync(tenantId, documents, cancellationToken);
+        return new DeleteAllResultDto(documents.Count);
+    }
+
+    private async Task DeleteDocumentsAsync(
+        Guid tenantId,
+        IReadOnlyList<StoredDocument> documents,
+        CancellationToken cancellationToken)
+    {
+        foreach (var document in documents)
+        {
+            await repository.RemoveAsync(document, cancellationToken);
+        }
+
+        await repository.SaveChangesAsync(cancellationToken);
+
+        foreach (var document in documents)
+        {
+            await fileStorage.DeleteAsync(document.StoragePath, cancellationToken);
+
+            await eventPublisher.PublishAsync(
+                new DocumentDeleted(document.Id, tenantId),
+                cancellationToken);
+        }
     }
 
     public async Task ApplyProcessingResultAsync(
@@ -137,5 +200,38 @@ public sealed class DocumentAppService
 
         document.MarkFailed(reason);
         await repository.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<DocumentRetryResult> RetryProcessingAsync(
+        Guid documentId,
+        CancellationToken cancellationToken)
+    {
+        var tenantId = tenantContext.RequireTenant();
+        var document = await repository.GetAsync(tenantId, documentId, cancellationToken);
+
+        if (document is null)
+        {
+            return DocumentRetryResult.NotFound();
+        }
+
+        if (document.Status != DocumentStatus.Failed)
+        {
+            return DocumentRetryResult.NotRetryable();
+        }
+
+        document.MarkProcessing();
+        await repository.SaveChangesAsync(cancellationToken);
+
+        await eventPublisher.PublishAsync(
+            new DocumentUploaded(
+                document.Id,
+                tenantId,
+                document.Name,
+                document.FileName,
+                document.ContentType,
+                document.StoragePath),
+            cancellationToken);
+
+        return DocumentRetryResult.Success(DocumentDto.From(document));
     }
 }

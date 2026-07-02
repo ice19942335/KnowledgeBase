@@ -41,15 +41,18 @@ public sealed class ChatAppService
     {
         var tenantId = tenantContext.RequireTenant();
         var (conversation, _) = await PrepareConversationAsync(tenantId, conversationId, question, cancellationToken);
-        var contextChunks = await searchApiClient.SearchAsync(tenantId, question, cancellationToken);
-        var userPrompt = BuildUserPrompt(question, contextChunks);
-        var answer = await chatCompletion.CompleteAsync(ragOptions.SystemPrompt, userPrompt, cancellationToken);
-        var sources = BuildSources(contextChunks);
+        var searchResult = await searchApiClient.SearchAsync(tenantId, question, cancellationToken);
+        var userPrompt = BuildUserPrompt(question, searchResult.Results);
+        var completion = await chatCompletion.CompleteAsync(ragOptions.SystemPrompt, userPrompt, cancellationToken);
+        var sources = BuildSources(searchResult.Results);
+        var tokenUsage = new TokenUsageSummary(
+            searchResult.TokenUsage.RequestTokens + completion.Usage.TotalTokens,
+            searchResult.TokenUsage.IndexedTokens);
 
-        conversation.AddMessage(MessageRole.Assistant, answer, JsonSerializer.Serialize(sources));
+        conversation.AddMessage(MessageRole.Assistant, completion.Text, JsonSerializer.Serialize(sources));
         await conversationRepository.SaveChangesAsync(cancellationToken);
 
-        return new ChatAnswerDto(conversation.Id, answer, sources);
+        return new ChatAnswerDto(conversation.Id, completion.Text, sources, tokenUsage);
     }
 
     public async Task<ChatTraceAnswerDto> AskWithTraceAsync(
@@ -121,7 +124,7 @@ public sealed class ChatAppService
             }));
 
         var llmStopwatch = Stopwatch.StartNew();
-        var answer = await chatCompletion.CompleteAsync(ragOptions.SystemPrompt, userPrompt, cancellationToken);
+        var completion = await chatCompletion.CompleteAsync(ragOptions.SystemPrompt, userPrompt, cancellationToken);
         llmStopwatch.Stop();
 
         steps.Add(new PipelineTraceStep(
@@ -134,10 +137,14 @@ public sealed class ChatAppService
                 Provider = "Gemini",
                 Model = geminiOptions.ChatModel
             },
-            Output: new { Answer = answer }));
+            Output: new
+            {
+                Answer = completion.Text,
+                TokenUsage = completion.Usage
+            }));
 
         var sources = BuildSources(searchTrace.Results);
-        conversation.AddMessage(MessageRole.Assistant, answer, JsonSerializer.Serialize(sources));
+        conversation.AddMessage(MessageRole.Assistant, completion.Text, JsonSerializer.Serialize(sources));
 
         var persistStopwatch = Stopwatch.StartNew();
         await conversationRepository.SaveChangesAsync(cancellationToken);
@@ -153,12 +160,17 @@ public sealed class ChatAppService
 
         totalStopwatch.Stop();
 
+        var tokenUsage = new TokenUsageSummary(
+            searchTrace.TokenUsage.RequestTokens + completion.Usage.TotalTokens,
+            searchTrace.TokenUsage.IndexedTokens);
+
         return new ChatTraceAnswerDto(
             conversation.Id,
-            answer,
+            completion.Text,
             sources,
             steps,
-            totalStopwatch.ElapsedMilliseconds);
+            totalStopwatch.ElapsedMilliseconds,
+            tokenUsage);
     }
 
     public async Task<IReadOnlyList<ConversationDto>> ListConversationsAsync(CancellationToken cancellationToken)
@@ -236,7 +248,11 @@ public sealed class ChatAppService
     }
 }
 
-public sealed record ChatAnswerDto(Guid ConversationId, string Answer, IReadOnlyList<SourceReference> Sources);
+public sealed record ChatAnswerDto(
+    Guid ConversationId,
+    string Answer,
+    IReadOnlyList<SourceReference> Sources,
+    TokenUsageSummary TokenUsage);
 
 public sealed record SourceReference(Guid DocumentId, string DocumentName, int ChunkIndex);
 

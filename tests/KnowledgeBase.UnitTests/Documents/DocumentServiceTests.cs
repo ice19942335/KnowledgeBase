@@ -3,6 +3,7 @@ using KnowledgeBase.Application.Abstractions;
 using KnowledgeBase.Application.Common.Options;
 using KnowledgeBase.Application.Documents;
 using KnowledgeBase.Domain.Documents;
+using DocumentEntity = KnowledgeBase.Domain.Documents.Document;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
@@ -66,7 +67,7 @@ public sealed class DocumentServiceTests
             .Returns(call =>
             {
                 var inputs = call.Arg<IReadOnlyList<string>>();
-                return inputs.Select(_ => new[] { 0.1f, 0.2f }).ToList();
+                return AiTestData.Embeddings(inputs.Count, 15);
             });
 
         var sut = CreateSut();
@@ -81,7 +82,7 @@ public sealed class DocumentServiceTests
             .GenerateAsync(Arg.Is<IReadOnlyList<string>>(list => list.Count == result.ChunkCount), Arg.Any<CancellationToken>());
         await documentSummaryGenerator.Received(1)
             .GenerateAsync("HR Policy", Arg.Any<string>(), Arg.Any<CancellationToken>());
-        await repository.Received(1).AddAsync(Arg.Any<Document>(), Arg.Any<CancellationToken>());
+        await repository.Received(1).AddAsync(Arg.Any<DocumentEntity>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -106,13 +107,13 @@ public sealed class DocumentServiceTests
     {
         repository
             .GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
-            .Returns((Document?)null);
+            .Returns((DocumentEntity?)null);
 
         var sut = CreateSut();
 
         var deleted = await sut.DeleteAsync(Guid.NewGuid(), CancellationToken.None);
 
         Assert.False(deleted);
-        repository.DidNotReceive().Remove(Arg.Any<Document>());
+        repository.DidNotReceive().Remove(Arg.Any<DocumentEntity>());
     }
 }

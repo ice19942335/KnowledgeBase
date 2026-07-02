@@ -16,6 +16,16 @@ public sealed class RagChatServiceTests
     private readonly IChunkReranker chunkReranker = Substitute.For<IChunkReranker>();
     private readonly IChatCompletionService chatCompletionService = Substitute.For<IChatCompletionService>();
 
+    public RagChatServiceTests()
+    {
+        chunkReranker.RerankAsync(
+                Arg.Any<string>(),
+                Arg.Any<IReadOnlyList<RankedChunkCandidate>>(),
+                Arg.Any<int>(),
+                Arg.Any<CancellationToken>())
+            .Returns(call => AiTestData.Rerank(call.Arg<IReadOnlyList<RankedChunkCandidate>>().ToList()));
+    }
+
     private RagChatService CreateSut(RagOptions? options = null)
     {
         var retrievalPipeline = new ChunkRetrievalPipeline(
@@ -41,7 +51,7 @@ public sealed class RagChatServiceTests
     public async Task AskAsync_WhenNoContext_ReturnsNoAnswerAndSkipsLlm()
     {
         embeddingGenerator.GenerateAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(new[] { 0.1f });
+            .Returns(AiTestData.Embedding());
         searchRepository.SearchVectorAsync(Arg.Any<float[]>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<ChunkMatch>());
         searchRepository.SearchKeywordAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
@@ -64,7 +74,7 @@ public sealed class RagChatServiceTests
         var secondDocument = Guid.NewGuid();
 
         embeddingGenerator.GenerateAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(new[] { 0.1f });
+            .Returns(AiTestData.Embedding());
         searchRepository.SearchVectorAsync(Arg.Any<float[]>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(new[]
             {
@@ -77,9 +87,9 @@ public sealed class RagChatServiceTests
                 Arg.Any<IReadOnlyList<RankedChunkCandidate>>(),
                 Arg.Any<int>(),
                 Arg.Any<CancellationToken>())
-            .Returns(call => call.Arg<IReadOnlyList<RankedChunkCandidate>>());
+            .Returns(call => AiTestData.Rerank(call.Arg<IReadOnlyList<RankedChunkCandidate>>().ToList()));
         chatCompletionService.CompleteAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns("Employees receive 25 vacation days.");
+            .Returns(AiTestData.Completion("Employees receive 25 vacation days."));
 
         var sut = CreateSut();
 

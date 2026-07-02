@@ -43,6 +43,11 @@ public static class HybridSearchMerger
 
     private static RankedChunkHit PreferRicherMetadata(RankedChunkHit left, RankedChunkHit right)
     {
+        if (left.EmbeddingTokenCount == 0 && right.EmbeddingTokenCount > 0)
+        {
+            return right with { Score = left.Score };
+        }
+
         if (string.IsNullOrWhiteSpace(left.FileName) && !string.IsNullOrWhiteSpace(right.FileName))
         {
             return right with { Score = left.Score };

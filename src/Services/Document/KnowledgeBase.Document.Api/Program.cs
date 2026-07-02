@@ -16,7 +16,7 @@ builder.Services.AddKnowledgeBaseSwagger("Document Service API");
 builder.Services.AddTenancy();
 builder.Services.AddKnowledgeBaseAuth(builder.Configuration);
 
-builder.Services.AddDocumentApplication();
+builder.Services.AddDocumentApplication(builder.Configuration);
 builder.Services.AddDocumentInfrastructure(builder.Configuration);
 
 var app = builder.Build();

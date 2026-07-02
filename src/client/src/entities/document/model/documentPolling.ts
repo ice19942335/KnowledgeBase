@@ -7,3 +7,7 @@ export const documentPollingIntervalMs = 2_000;
 export function hasPendingDocuments(documents: DocumentDto[] | undefined): boolean {
   return documents?.some((document) => pendingStatuses.has(document.status)) ?? false;
 }
+
+export function isDocumentPending(document: DocumentDto | undefined): boolean {
+  return document ? pendingStatuses.has(document.status) : false;
+}

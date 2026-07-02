@@ -1,5 +1,5 @@
 import { type FormEvent } from "react";
-import { Button, PageGuide } from "../../../shared/ui";
+import { Button, PageGuide, TokenUsageSummaryPanel } from "../../../shared/ui";
 import { useDraftOrSubmitted } from "../../../shared/lib/useDraftOrSubmitted";
 import { useSemanticSearch } from "../../../features/semantic-search/model/useSemanticSearch";
 import styles from "./SearchPage.module.css";
@@ -26,7 +26,7 @@ const searchGuideSteps = [
   {
     title: "Return excerpts",
     description:
-      "POST /api/search returns ranked chunk text with relevance scores — raw passages, not a generated answer.",
+      "POST /api/search returns ranked chunk text with relevance scores and a token usage summary (request vs one-time indexed tokens).",
   },
 ] as const;
 
@@ -69,20 +69,26 @@ export function SearchPage() {
       </form>
 
       {isError && <p className={styles.state}>Search failed. Please try again.</p>}
-      {results && results.length === 0 && <p className={styles.state}>No matches found.</p>}
+      {results && results.results.length === 0 && <p className={styles.state}>No matches found.</p>}
 
-      {results && results.length > 0 && (
-        <ul className={styles.results}>
-          {results.map((result) => (
-            <li key={`${result.documentId}-${result.chunkIndex}`} className={styles.result}>
-              <div className={styles.resultHeader}>
-                <span>{result.documentName}</span>
-                <span className={styles.score}>score: {result.score.toFixed(3)}</span>
-              </div>
-              <p className={styles.content}>{result.content}</p>
-            </li>
-          ))}
-        </ul>
+      {results && results.results.length > 0 && (
+        <>
+          <TokenUsageSummaryPanel tokenUsage={results.tokenUsage} testId="search-token-usage" />
+          <ul className={styles.results}>
+            {results.results.map((result) => (
+              <li key={`${result.documentId}-${result.chunkIndex}`} className={styles.result}>
+                <div className={styles.resultHeader}>
+                  <span>{result.documentName}</span>
+                  <span className={styles.score}>
+                    score: {result.score.toFixed(3)}
+                    {result.embeddingTokenCount > 0 && ` · indexed: ${result.embeddingTokenCount} tokens`}
+                  </span>
+                </div>
+                <p className={styles.content}>{result.content}</p>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </section>
   );

@@ -2,7 +2,7 @@ namespace KnowledgeBase.Ai;
 
 public interface IChunkReranker
 {
-    Task<IReadOnlyList<RankedChunkCandidate>> RerankAsync(
+    Task<RerankResult> RerankAsync(
         string query,
         IReadOnlyList<RankedChunkCandidate> candidates,
         int finalTopK,
@@ -15,4 +15,5 @@ public sealed record RankedChunkCandidate(
     string? FileName,
     int ChunkIndex,
     string Content,
-    double Score);
+    double Score,
+    int EmbeddingTokenCount = 0);

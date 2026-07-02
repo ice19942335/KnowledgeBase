@@ -21,5 +21,9 @@ public class SearchOptions
 
     public bool RerankingEnabled { get; set; } = true;
 
-    public int RerankingCandidateLimit { get; set; } = 15;
+    public int RerankingCandidateLimit { get; set; } = 20;
+
+    public bool ContiguousGapFillEnabled { get; set; } = true;
+
+    public int ContiguousGapFillMaxExtra { get; set; } = 3;
 }

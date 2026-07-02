@@ -36,7 +36,7 @@ public static partial class HeadingParser
 
             if (body.Length > 0)
             {
-                body.Append(' ');
+                body.Append('\n');
             }
 
             body.Append(line);
