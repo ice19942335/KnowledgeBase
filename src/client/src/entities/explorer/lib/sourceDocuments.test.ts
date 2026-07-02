@@ -44,6 +44,7 @@ describe("getOrderedUsedChunks", () => {
         chunkIndex: 2,
         content: "Second priority chunk.",
         indexedAt: "2026-06-18T10:00:00Z",
+        embeddingTokenCount: 42,
       },
       {
         id: "chunk-5",
@@ -52,6 +53,7 @@ describe("getOrderedUsedChunks", () => {
         chunkIndex: 5,
         content: "First priority chunk.",
         indexedAt: "2026-06-18T10:00:00Z",
+        embeddingTokenCount: 38,
       },
     ];
 
